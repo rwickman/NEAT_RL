@@ -4,29 +4,33 @@ import torch.nn.functional as F
 
 import random
 import numpy as np
+import copy
 
 class Actor(nn.Module):
-    def __init__(self, inp_size, out_size, hidden_size, n_hidden, max_action):
+    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, max_action):
         super().__init__()
-        self.inp_size = inp_size
-        self.out_size = out_size
+        self.state_dim = state_dim
+        self.action_dim = action_dim
         self.hidden_size = hidden_size
         self.n_hidden = n_hidden
         self.max_action = max_action 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.in_layer = nn.Linear(inp_size, hidden_size)
+        self.in_layer = nn.Linear(state_dim, hidden_size)
         self.hidden_layers = []
         for _ in range(n_hidden):
             self.hidden_layers.append(nn.Linear(hidden_size, hidden_size))
         
         self.hidden_layers = nn.Sequential(*self.hidden_layers)
-        self.out_layer = nn.Linear(hidden_size, out_size)
+        self.out_layer = nn.Linear(hidden_size, action_dim)
 
-    def copy(self):
-        copy_net = Net(self.inp_size, self.out_size, self.hidden_size, self.n_hidden)
-        copy_net.load_state_dict(self.state_dict())
+    def copy(self, transfer_weights=True):
+        copy_net = Actor(self.state_dim, self.action_dim, self.hidden_size, self.n_hidden, self.max_action).to(self.device)
+        if transfer_weights:
+            copy_net.load_state_dict(copy.deepcopy(self.state_dict()))
 
         return copy_net
+
 
     def forward(self, x):
         x = F.relu(self.in_layer(x))

@@ -1,7 +1,6 @@
 import gym
 import torch
 from neat_rl.rl.td3 import TD3
-from neat_rl.rl.replay_buffer import ReplayBuffer
 
 class Environment:
     def __init__(self, args, num_episodes=5000):
@@ -15,10 +14,8 @@ class Environment:
         self.args.noise_clip = self.args.noise_clip * max_action
 
         self.td3 = TD3(self.args, state_dim, action_dim, max_action)
-        self.goal = -0.1
-        
 
-        self.replay_buffer = ReplayBuffer(state_dim, action_dim)
+
         if self.args.load:
             self.td3.load()
 
@@ -39,7 +36,7 @@ class Environment:
 
         while not done and not truncated:
             cur_step += 1
-            if self.replay_buffer.size < self.args.learning_starts:
+            if self.td3.replay_buffer.size < self.args.learning_starts:
                 action = self.env.action_space.sample()
             else:
                 action = self.td3.sample_action(state)
@@ -48,9 +45,9 @@ class Environment:
             if cur_step > self.args.max_timesteps:
                 done = True
 
-            self.replay_buffer.add(state, action, next_state, reward, done)
-            if self.replay_buffer.size >= self.args.learning_starts:
-                self.td3.train(self.replay_buffer)
+            self.td3.replay_buffer.add(state, action, next_state, reward, done)
+            if self.td3.replay_buffer.size >= self.args.learning_starts:
+                self.td3.train()
 
 
             
@@ -72,7 +69,7 @@ class Environment:
             print(f"TOTAL REWARD {total_reward} FOR EPISODE {i}")
             # if i >= 10:
             #     for _ in range(16):
-            #         self.td3.train(self.replay_buffer)
+            #         self.td3.train(self.td3.replay_buffer)
                 
             if i % 32 == 0: 
                 self.td3.save()
