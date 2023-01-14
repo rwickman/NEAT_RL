@@ -18,14 +18,15 @@ class Environment:
 
         if self.args.load:
             self.td3.load()
-
-
-
-    def run(self, render=False):
-        if render:
+        
+        if self.args.render:
             self.env = gym.make(self.args.env, render_mode='human')
         else:
             self.env = gym.make(self.args.env)
+
+
+    def run(self, render=False):
+
 
 
         state, _ = self.env.reset()
@@ -48,8 +49,6 @@ class Environment:
             self.td3.replay_buffer.add(state, action, next_state, reward, done)
             if self.td3.replay_buffer.size >= self.args.learning_starts:
                 self.td3.train()
-
-
             
             if render:
                 self.env.render()     
@@ -66,13 +65,13 @@ class Environment:
             total_timesteps += timesteps
 
             #total_reward = self.run(False, True)
-            print(f"TOTAL REWARD {total_reward} FOR EPISODE {i}")
+            print(f"TOTAL REWARD {total_reward} FOR EPISODE {i} TOTAL TIMESTEPS {total_timesteps}")
             # if i >= 10:
             #     for _ in range(16):
             #         self.td3.train(self.td3.replay_buffer)
                 
-            if i % 32 == 0: 
-                self.td3.save()
-                print("SAVED MODEL")
+        #     if i % 32 == 0: 
+        #         self.td3.save()
+        #         print("SAVED MODEL")
         
-        self.td3.save()
+        # self.td3.save()

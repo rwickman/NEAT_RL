@@ -54,7 +54,8 @@ def save_population(population, save_file):
         "generation": population.generation,
         "cur_id": population.cur_id,
         "base_org": base_org,
-        "species_list": species_list
+        "species_list": species_list,
+        "org_id_to_species": population.org_id_to_species
     }
 
     with open(save_file, "w") as f:
@@ -62,8 +63,8 @@ def save_population(population, save_file):
     
     return pop_dict
 
-def _load_organism(args, org_dict, td3ga):
-    net = td3ga.actor.copy(transfer_weights=False)
+def _load_organism(args, org_dict, base_actor):
+    net = base_actor.copy(transfer_weights=False)
     net.load_state_dict(torch.load(org_dict["network"]))
 
     org = Organism(args, net, org_dict["generation"], org_dict["id"])
@@ -77,7 +78,7 @@ def _load_organism(args, org_dict, td3ga):
 
     return org
 
-def load_population(args, td3ga):
+def load_population(args, td3ga, base_actor):
     prefix_dir = args.save_file.split(".json")[0]
     # Load the population dictionary
     with open(args.save_file) as f:
@@ -86,12 +87,16 @@ def load_population(args, td3ga):
     population = GradientPopulation(args, td3ga)
     population.cur_id = pop_dict["cur_id"]
     population.generation = pop_dict["generation"]
-    population.base_org = _load_organism(args, pop_dict["base_org"], td3ga)
+    population.base_org = _load_organism(args, pop_dict["base_org"], base_actor)
+    if "org_id_to_species" in pop_dict:
+        for k, v in pop_dict["org_id_to_species"].items():
+            population.org_id_to_species[int(k)] = v
+
     
     # Load the organisms
     org_index = {} # Used to quickly retrieve organisms
     for org_dict in pop_dict["orgs"]:
-        org = _load_organism(args, org_dict, td3ga)
+        org = _load_organism(args, org_dict, base_actor)
         population.orgs.append(org)
         org_index[org.id] = org
 

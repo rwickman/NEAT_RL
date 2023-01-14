@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from neat_rl.networks.util import weights_init_
 
 class CriticNet(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_size, n_hidden):
@@ -14,6 +15,8 @@ class CriticNet(nn.Module):
         
         self.hidden_layers = nn.Sequential(*self.hidden_layers)
         self.out_layer = nn.Linear(hidden_size, 1)
+        self.apply(weights_init_)
+        
 
     def forward(self, state, action):
         x = F.relu(self.in_layer(torch.cat((state, action), dim=-1)))

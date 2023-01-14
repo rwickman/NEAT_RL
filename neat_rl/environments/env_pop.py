@@ -3,6 +3,7 @@ import torch
 from neat_rl.rl.td3ga import TD3GA
 from neat_rl.neat.population import GradientPopulation
 from neat_rl.helpers.saving import save_population, load_population
+
 class EnvironmentGA:
     def __init__(self, args, num_episodes=5000):
         self.args = args
@@ -21,7 +22,7 @@ class EnvironmentGA:
 
         if self.args.load:
             self.td3ga.load()
-            self.population = load_population(self.args, self.td3ga)
+            self.population = load_population(self.args, self.td3ga.actor)
 
     def run(self, org, render=False):
         if render:

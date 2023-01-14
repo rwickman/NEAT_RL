@@ -13,12 +13,25 @@ class GradientPopulation(Population):
         self.mutator = GradientMutator(args, self.inv_counter)
         self.breeder = GradientReproduction(args)
         self.td3ga = td3ga
+        self.org_id_to_species = {}
+
     
     def setup(self, net):
         self.base_org = Organism(self.args, net)
         self.orgs = self.spawn(self.base_org, self.args.init_pop_size)
         self.speciate()
+        self.org_id_to_species = {}
+        total_orgs = 0
+        for cur_species in self.species_list:
+            total_orgs += len(cur_species.orgs)
+            for org in cur_species.orgs:
 
+                assert org.id not in self.org_id_to_species 
+                self.org_id_to_species[org.id] = cur_species.species_id
+        print("total_orgs", total_orgs, len(self.orgs))
+        assert total_orgs == len(self.orgs)
+
+        
     def spawn(self, base_org, pop_size):
         orgs = []
         for i in range(pop_size):
@@ -41,7 +54,7 @@ class GradientPopulation(Population):
         if random.random() <= self.args.pg_rate:
             parent_2 = parent_1
             child_net = parent_1.net.copy()
-            self.td3ga.pg_update(child_net)
+            self.td3ga.pg_update(child_net, cur_species.species_id)
         else:
             if random.random() <= self.args.mutate_no_crossover:
                 parent_2 = parent_1
@@ -65,3 +78,10 @@ class GradientPopulation(Population):
         # Increment the current organism ID
         self.cur_id += 1
         return new_org, parent_1, parent_2
+    
+    def evolve(self):
+        super().evolve()
+        self.org_id_to_species = {}
+        for cur_species in self.species_list:
+            for org in cur_species.orgs:
+                self.org_id_to_species[org.id] = cur_species.species_id

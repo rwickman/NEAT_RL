@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 
-class ReplayBuffer:
+class SpeciesReplayBuffer:
 	def __init__(self, state_dim, action_dim, max_size=int(1e6)):
 		self.max_size = max_size
 		self.ptr = 0
@@ -13,16 +13,17 @@ class ReplayBuffer:
 		self.action = np.zeros((max_size, action_dim))
 		self.next_state = np.zeros((max_size, state_dim))
 		self.reward = np.zeros((max_size, 1))
+		self.species_id = np.zeros((max_size, 1))
 		self.not_done = np.zeros((max_size, 1))
 
 		self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-	def add(self, state, action, next_state, reward, done):
+	def add(self, state, action, next_state, reward, species_id, done):
 		self.state[self.ptr] = state
 		self.action[self.ptr] = action
 		self.next_state[self.ptr] = next_state
 		self.reward[self.ptr] = reward
+		self.species_id[self.ptr] = species_id
 		self.not_done[self.ptr] = 1. - done
 
 		self.ptr = (self.ptr + 1) % self.max_size
@@ -37,6 +38,7 @@ class ReplayBuffer:
 			torch.FloatTensor(self.action[ind]).to(self.device),
 			torch.FloatTensor(self.next_state[ind]).to(self.device),
 			torch.FloatTensor(self.reward[ind]).to(self.device),
+			torch.LongTensor(self.species_id[ind]).to(self.device).view(-1),
 			torch.FloatTensor(self.not_done[ind]).to(self.device)
 		)
 

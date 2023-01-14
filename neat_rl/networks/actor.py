@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from neat_rl.networks.util import weights_init_
 
 import random
 import numpy as np
 import copy
+
 
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_size, n_hidden, max_action):
@@ -17,12 +19,17 @@ class Actor(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.in_layer = nn.Linear(state_dim, hidden_size)
+
         self.hidden_layers = []
+
         for _ in range(n_hidden):
             self.hidden_layers.append(nn.Linear(hidden_size, hidden_size))
-        
+
+
         self.hidden_layers = nn.Sequential(*self.hidden_layers)
         self.out_layer = nn.Linear(hidden_size, action_dim)
+
+        self.apply(weights_init_)
 
     def copy(self, transfer_weights=True):
         copy_net = Actor(self.state_dim, self.action_dim, self.hidden_size, self.n_hidden, self.max_action).to(self.device)
