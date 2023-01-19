@@ -1,9 +1,10 @@
 import gym
 import torch
 from neat_rl.rl.td3 import TD3
+import QDgym
 
 class Environment:
-    def __init__(self, args, num_episodes=5000):
+    def __init__(self, args, num_episodes=500000):
         self.args = args
         self.num_episodes=num_episodes
         self.env = gym.make(self.args.env)
@@ -23,33 +24,35 @@ class Environment:
             self.env = gym.make(self.args.env, render_mode='human')
         else:
             self.env = gym.make(self.args.env)
+        
+        self.total_timesteps = 0
 
 
     def run(self, render=False):
 
 
 
-        state, _ = self.env.reset()
+        state = self.env.reset()
         done = False
         truncated = False
         total_reward = 0
         cur_step = 0
 
-        while not done and not truncated:
+        while not done:
             cur_step += 1
             if self.td3.replay_buffer.size < self.args.learning_starts:
                 action = self.env.action_space.sample()
             else:
                 action = self.td3.sample_action(state)
 
-            next_state, reward, done, truncated, info = self.env.step(action)    
-            if cur_step > self.args.max_timesteps:
-                done = True
+            next_state, reward, done, _ = self.env.step(action)
 
             self.td3.replay_buffer.add(state, action, next_state, reward, done)
-            if self.td3.replay_buffer.size >= self.args.learning_starts:
+            if self.total_timesteps % self.args.update_freq == 0 and self.td3.replay_buffer.size >= self.args.learning_starts:
                 self.td3.train()
-            
+
+            self.total_timesteps += 1 
+
             if render:
                 self.env.render()     
             total_reward += reward
@@ -59,13 +62,13 @@ class Environment:
 
     def train(self):
         total_timesteps = 0
-        for i in range(self.num_episodes):
+        for i in range(self.args.num_episodes):
             total_reward, timesteps = self.run()
             #total_reward, timesteps = self.run(True)
-            total_timesteps += timesteps
+            #self.total_timesteps += timesteps
 
             #total_reward = self.run(False, True)
-            print(f"TOTAL REWARD {total_reward} FOR EPISODE {i} TOTAL TIMESTEPS {total_timesteps}")
+            print(f"TOTAL REWARD {total_reward} FOR EPISODE {i} TOTAL TIMESTEPS {self.total_timesteps}")
             # if i >= 10:
             #     for _ in range(16):
             #         self.td3.train(self.td3.replay_buffer)

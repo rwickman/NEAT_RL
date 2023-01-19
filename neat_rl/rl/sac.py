@@ -54,7 +54,7 @@ class SAC:
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        # nn.utils.clip_grad_norm_(self.critic.parameters(), 2.0)
+        nn.utils.clip_grad_norm_(self.critic.parameters(), self.args.max_norm)
         self.critic_optimizer.step()
 
         pi, log_pi, _ = self.actor.sample(state)
@@ -65,6 +65,7 @@ class SAC:
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+        nn.utils.clip_grad_norm_(self.actor.parameters(), self.args.max_norm)
         self.actor_optimizer.step()
 
         if self.total_iter % self.args.policy_freq == 0:

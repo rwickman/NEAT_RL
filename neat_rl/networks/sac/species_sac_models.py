@@ -12,8 +12,9 @@ epsilon = 1e-6
 class SpeciesGaussianPolicy(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim, num_species, emb_dim, action_space=None):
         super().__init__()
-        self.species_emb = nn.Embedding(num_species, emb_dim)
-        self.linear1 = nn.Linear(state_dim + emb_dim, hidden_dim)
+        self.device = ""
+        self.num_species = num_species
+        self.linear1 = nn.Linear(state_dim + num_species, hidden_dim)
         self.linear2 = nn.Linear(hidden_dim, hidden_dim)
 
         self.mean_linear = nn.Linear(hidden_dim, action_dim)
@@ -32,8 +33,8 @@ class SpeciesGaussianPolicy(nn.Module):
                 (action_space.high + action_space.low) / 2.)
 
     def forward(self, state, species_id):
-        species_embs = self.species_emb(species_id)
-        x = F.relu(self.linear1(torch.cat((state, species_embs), -1)))
+        species_one_hot = F.one_hot(species_id.view(-1), self.num_species).to(self.device)
+        x = F.relu(self.linear1(torch.cat((state, species_one_hot), -1)))
         x = F.relu(self.linear2(x))
         mean = self.mean_linear(x)
         log_std = self.log_std_linear(x)
@@ -57,4 +58,5 @@ class SpeciesGaussianPolicy(nn.Module):
     def to(self, device):
         self.action_scale = self.action_scale.to(device)
         self.action_bias = self.action_bias.to(device)
+        self.device = device
         return super().to(device)

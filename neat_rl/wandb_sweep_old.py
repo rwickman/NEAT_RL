@@ -22,7 +22,7 @@ class HyperparameterTuner:
         self.args.org_lr = wandb.config.org_lr
         self.args.max_species = wandb.config.max_species
         self.args.init_species = wandb.config.max_species
-        self.args.init_pop_size = wandb.config.init_pop_size
+        self.args.pop_size = wandb.config.pop_size
         self.args.n_org_updates = int(wandb.config.n_org_updates)
         self.args.batch_size = wandb.config.batch_size
         self.args.pg_rate = wandb.config.pg_rate
@@ -50,7 +50,7 @@ class HyperparameterTuner:
                 'lr': {'max': 1e-3, 'min': 1e-5},
                 'org_lr': {'max': 1e-3, 'min': 1e-5},
                 'max_species': {'values': [1, 2, 3, 4, 5, 6, 7, 8]},
-                'init_pop_size': {'values': [8, 16, 32, 64]},
+                'pop_size': {'values': [8, 16, 32, 64]},
                 'n_org_updates': {'max': 64, 'min': 8},
                 'batch_size': {'values': [64, 128, 256]},
                 'pg_rate': {'max': 1.0, 'min': 0.0},

@@ -8,10 +8,10 @@ from neat_rl.networks.util import weights_init_
 class SpeciesCriticNet(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species, emb_dim):
         super().__init__()
-
-        self.species_emb = nn.Embedding(num_species, emb_dim)
+        self.device = "cpu"
+        self.num_species = num_species
         self.in_layer = nn.Sequential(
-            nn.Linear(state_dim + action_dim + emb_dim, hidden_size),
+            nn.Linear(state_dim + action_dim + num_species, hidden_size),
             nn.ReLU())
 
         self.hidden_layers = []
@@ -25,8 +25,8 @@ class SpeciesCriticNet(nn.Module):
         self.apply(weights_init_)
     
     def forward(self, state, action, species_ids):
-        species_embs = self.species_emb(species_ids)
-        x = self.in_layer(torch.cat((state, action, species_embs), dim=-1))
+        species_one_hot = F.one_hot(species_ids.view(-1), self.num_species).to(self.device)
+        x = self.in_layer(torch.cat((state, action, species_one_hot), dim=-1))
         x = self.hidden_layers(x)
         x = self.out_layer(x)
         return x
@@ -34,6 +34,7 @@ class SpeciesCriticNet(nn.Module):
 class SpeciesCritic(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size):
         super().__init__()
+        self.device = "cpu"
         self.critic_1 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size)
         self.critic_2 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size)
 
@@ -46,3 +47,9 @@ class SpeciesCritic(nn.Module):
         
         return val_pred_1, val_pred_2
     
+    def to(self, device):
+        self.device = device
+        self.critic_1.device = device
+        self.critic_2.device = device
+
+        return super().to(device)

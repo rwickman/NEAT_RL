@@ -74,7 +74,7 @@ class TD3:
         # nn.utils.clip_grad_norm_(self.critic.parameters(), 2.0)
         self.critic_optimizer.step()
 
-        if self.total_iter % 512 == 0:
+        if self.total_iter % 2048 == 0:
             print("target_Q", target_Q[:10].view(-1), current_Q1[:10].view(-1))
             
         # Delayed policy updates

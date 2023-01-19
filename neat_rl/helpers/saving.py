@@ -2,15 +2,19 @@ import json, os
 import torch
 
 from neat_rl.neat.population import GradientPopulation
-from neat.organism import Organism
+from neat_rl.neat.organism import Organism
 
 def create_org_dict(org, prefix_dir):
     org_dict = {
         "id": org.id,
+        "age": org.age,
         "avg_fitness": org.avg_fitness,
         "generation": org.generation,
         "best_fitness": org.best_fitness,
-        "num_updates": org._num_updates
+        "num_updates": org._num_updates,
+        "behavior": list(org.behavior) if org.behavior is not None else None,
+        "bonus_avg": org.bonus_avg,
+        "bonus_best": org.bonus_best
     }
     model_file = os.path.join(prefix_dir, f"net_{org.id}.pt") 
     torch.save(org.net.state_dict(), model_file)
@@ -19,8 +23,10 @@ def create_org_dict(org, prefix_dir):
     return org_dict
 
 
-def save_population(population, save_file):
-    prefix_dir = save_file.split(".json")[0]
+def save_population(population, save_dir):
+    save_file = os.path.join(save_dir, "pop.json")
+    
+    prefix_dir = os.path.join(save_dir, "nets")
     if not os.path.exists(prefix_dir):
         os.mkdir(prefix_dir)
     else:
@@ -68,8 +74,18 @@ def _load_organism(args, org_dict, base_actor):
     net.load_state_dict(torch.load(org_dict["network"]))
 
     org = Organism(args, net, org_dict["generation"], org_dict["id"])
+    org.behavior = org_dict["behavior"]
+    if "age" in org_dict:
+        org.age = org_dict["age"]
+    
     if "best_fitness" in org_dict:
         org.best_fitness = org_dict["best_fitness"]
+    
+    if "bonus_avg" in org_dict:
+        org.bonus_avg = org_dict["bonus_avg"]
+
+    if "bonus_best" in org_dict:
+        org.bonus_best = org_dict["bonus_best"]
 
     if "avg_fitness" in org_dict:
         # Bit of a heuristic to assume avg_fitness is fitness sum
@@ -79,9 +95,11 @@ def _load_organism(args, org_dict, base_actor):
     return org
 
 def load_population(args, td3ga, base_actor):
-    prefix_dir = args.save_file.split(".json")[0]
+    prefix_dir = os.path.join(args.save_dir, "nets")
+    save_file = os.path.join(args.save_dir, "pop.json")
+
     # Load the population dictionary
-    with open(args.save_file) as f:
+    with open(save_file) as f:
         pop_dict = json.load(f)
     
     population = GradientPopulation(args, td3ga)

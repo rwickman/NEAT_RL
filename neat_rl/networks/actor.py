@@ -31,7 +31,7 @@ class Actor(nn.Module):
 
         self.apply(weights_init_)
 
-    def copy(self, transfer_weights=True):
+    def copy(self, transfer_weights=False):
         copy_net = Actor(self.state_dim, self.action_dim, self.hidden_size, self.n_hidden, self.max_action).to(self.device)
         if transfer_weights:
             copy_net.load_state_dict(copy.deepcopy(self.state_dict()))

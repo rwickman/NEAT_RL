@@ -45,8 +45,6 @@ class EnvironmentGA:
                 action = self.td3ga.sample_action_net(org.net, state)
 
             next_state, reward, done, truncated, info = self.env.step(action)    
-            if cur_step > self.args.max_timesteps:
-                done = True
 
             self.td3ga.replay_buffer.add(state, action, next_state, reward, done)
             if self.td3ga.replay_buffer.size >= self.args.learning_starts:
