@@ -8,7 +8,7 @@ from neat_rl.networks.species_critic import SpeciesCritic
 from neat_rl.networks.discriminator import Discriminator 
 
 from neat_rl.rl.species_replay_buffer import SpeciesReplayBuffer
-from neat_rl.rl.behavior_distr import BehaviorDistr
+
 
 class SpeciesTD3:
     def __init__(self, args, state_dim, action_dim, max_action, behavior_dim):
@@ -30,9 +30,12 @@ class SpeciesTD3:
         self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species, self.args.emb_size).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.args.lr)
+
+
         
         if self.args.use_state_disc:
-            self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
+            self.discriminator = Discriminator(self.args.num_species, state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
+            
         elif self.args.use_state_only_disc:
             self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
 
@@ -45,12 +48,10 @@ class SpeciesTD3:
 
         self.critic_loss_fn = nn.MSELoss()
         self.disc_loss_fn = nn.CrossEntropyLoss()
-
         self.replay_buffer = SpeciesReplayBuffer(state_dim, action_dim, behavior_dim, self.args.replay_capacity)
 
         self.total_iter = 0
         self.rl_save_file = os.path.join(self.args.save_dir, "td3.pt")
-        self.behavior_distr = BehaviorDistr(self.args, behavior_dim)
 
         
     def select_action(self, state, species_id):
@@ -59,16 +60,13 @@ class SpeciesTD3:
 
     def sample_action(self, state, species_id):
         species_id = torch.tensor([species_id]).to(self.device)
+
         action = (
             self.select_action(state, species_id)
                 + np.random.normal(0, self.max_action * self.args.expl_noise, size=self.action_dim)
             ).clip(-self.max_action, self.max_action)
         return action
     
-    def add_sample(self, state, action, next_state, reward, species_id, behavior, done):
-        #self.behavior_distr.add(torch.tensor(behavior, device=self.device))
-        self.replay_buffer.add(state, action, next_state, reward, species_id, behavior, done)
-
 
     def train(self):
         self.total_iter += 1
@@ -86,7 +84,8 @@ class SpeciesTD3:
             ).clamp(-self.max_action, self.max_action)
 
             if self.args.use_state_disc:
-                disc_logits = self.discriminator(state)
+                state_logits, action_logits = self.discriminator(state, action)
+
             elif self.args.use_state_only_disc:
                 disc_logits = self.discriminator(state)
             elif self.args.use_action_disc:
@@ -94,9 +93,12 @@ class SpeciesTD3:
             else:    
                 disc_logits = self.discriminator(behavior)
 
-            #disc_preds = torch.softmax(disc_logits, dim=-1)
-            diversity_bonus = disc_logits.gather(-1, species_id.unsqueeze(1))
-            
+            disc_preds_state = torch.softmax(state_logits, dim=-1)
+            disc_preds_action = torch.softmax(action_logits, dim=-1)
+
+            diversity_bonus_action = disc_preds_action.gather(-1, species_id.unsqueeze(1))
+            diversity_bonus_state = disc_preds_state.gather(-1, species_id.unsqueeze(1)) 
+            diversity_bonus = diversity_bonus_action + diversity_bonus_state
             if not self.args.no_train_diversity:
                 # Add the diversity bonus
                 reward = reward + self.args.disc_lam * diversity_bonus 
@@ -118,7 +120,23 @@ class SpeciesTD3:
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.args.max_norm)
         self.critic_optimizer.step()
 
+        # Train the discriminator
+        # if self.args.use_state_disc:
+        #     logits = self.discriminator(torch.cat((state, action), -1))
+        # elif self.args.use_state_only_disc:
+        #     logits = self.discriminator(state)
+        # elif self.args.use_action_disc:
+        #     logits = self.discriminator(action)
+        # else:
+        #     logits = self.discriminator(behavior)
+        state_logits, action_logits = self.discriminator(state, action)
 
+        disc_loss = self.disc_loss_fn(state_logits, species_id)
+        disc_loss += self.disc_loss_fn(action_logits, species_id)
+        self.discriminator_optimizer.zero_grad()
+        disc_loss.backward()
+        nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
+        self.discriminator_optimizer.step()
 
         # Delayed policy updates
         if self.total_iter % self.args.policy_freq == 0:
@@ -143,42 +161,11 @@ class SpeciesTD3:
                 print("reward", reward[:10].view(-1))
                 print("actor_loss", actor_loss, "critic_loss", critic_loss)
                 print("behavior", behavior[:10])
-                #print("skew_weights", skew_weights[:10], probs[:10], skew_weights.max(), probs.max(), skew_weights.sum(), probs.sum())
-                print("diversity_bonus", diversity_bonus.view(-1)[:10], "\n")
-    
-    def train_discriminator(self):
-        # self.behavior_distr.refresh(
-        #     torch.tensor(self.replay_buffer.behavior[:self.replay_buffer.size], dtype=torch.float32), torch.tensor(self.replay_buffer.species_id[:self.replay_buffer.size], dtype=torch.int64).view(-1))
-        self.behavior_distr.refresh()
-        for _ in range(self.args.disc_train_iter):
-            # Train the discriminator
-            # if self.args.use_state_disc:
-            #     logits = self.discriminator(state)
-            # elif self.args.use_state_only_disc:
-            #     logits = self.discriminator(state)
-            # elif self.args.use_action_disc:
-            #     logits = self.discriminator(action)
-            # else:
-            behavior, species_id = self.behavior_distr.sample()
-            behavior = behavior.to(self.device)
-            species_id = species_id.to(self.device)
+                print("diversity_bonus_state", diversity_bonus_state.view(-1)[:10])
+                print("diversity_bonus_action", diversity_bonus_action.view(-1)[:10])
+                print("disc_loss", disc_loss, "\n")
+                #print("diversity_bonus", diversity_bonus.view(-1)[:10], "disc_loss", disc_loss, "\n")
 
-            logits = self.discriminator(behavior)
-            
-            # skew_weights, probs = self.behavior_distr.behavior_weights(
-            #     behavior,
-            #     torch.tensor(self.replay_buffer.behavior.mean(0), device=self.device),
-            #     torch.tensor(self.replay_buffer.behavior.std(0), device=self.device))
-
-            disc_loss = self.disc_loss_fn(logits, species_id)
-            self.discriminator_optimizer.zero_grad()
-            disc_loss.backward()
-            nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
-            self.discriminator_optimizer.step()
-        print("behavior[:5]", behavior[:5], behavior[-10:])
-        print("disc_loss", disc_loss)
-
-    
     def save(self):
         model_dict = {
             "actor": self.actor.state_dict(),
@@ -191,8 +178,7 @@ class SpeciesTD3:
             "discriminator_optimizer": self.discriminator_optimizer.state_dict()
         }
         torch.save(model_dict, self.rl_save_file)
-        self.behavior_distr.save()
-
+    
     def load(self):
         model_dict = torch.load(self.rl_save_file)
 
@@ -203,6 +189,5 @@ class SpeciesTD3:
         self.critic_target.load_state_dict(model_dict["critic_target"])
         self.critic_optimizer.load_state_dict(model_dict["critic_optimizer"])
         self.discriminator.load_state_dict(model_dict["discriminator"])
-        
         self.discriminator_optimizer.load_state_dict(model_dict["discriminator_optimizer"])
-        self.behavior_distr.load()
+

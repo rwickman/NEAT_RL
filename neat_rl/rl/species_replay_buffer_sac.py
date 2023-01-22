@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 
-class SpeciesReplayBuffer:
+class SpeciesReplayBufferSAC:
 	def __init__(self, state_dim, action_dim, behavior_dim, max_size=int(1e6)):
 		self.max_size = max_size
 		self.ptr = 0
@@ -11,6 +11,8 @@ class SpeciesReplayBuffer:
 
 		self.state = np.zeros((max_size, state_dim))
 		self.action = np.zeros((max_size, action_dim))
+		self.mean = np.zeros((max_size, action_dim))
+		self.log_std = np.zeros((max_size, action_dim))
 		self.next_state = np.zeros((max_size, state_dim))
 		self.reward = np.zeros((max_size, 1))
 		self.species_id = np.zeros((max_size, 1))
@@ -19,9 +21,12 @@ class SpeciesReplayBuffer:
 
 		self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	def add(self, state, action, next_state, reward, species_id, behavior, done):
+	def add(self, state, action, log_std, mean, next_state, reward, species_id, behavior, done):
 		self.state[self.ptr] = state
 		self.action[self.ptr] = action
+		self.log_std[self.ptr] = log_std
+		self.mean[self.ptr] = mean
+		
 		self.next_state[self.ptr] = next_state
 		self.reward[self.ptr] = reward
 		self.species_id[self.ptr] = species_id
@@ -38,6 +43,8 @@ class SpeciesReplayBuffer:
 		return (
 			torch.FloatTensor(self.state[ind]).to(self.device),
 			torch.FloatTensor(self.action[ind]).to(self.device),
+			torch.FloatTensor(self.log_std[ind]).to(self.device),
+			torch.FloatTensor(self.mean[ind]).to(self.device),
 			torch.FloatTensor(self.next_state[ind]).to(self.device),
 			torch.FloatTensor(self.reward[ind]).to(self.device),
 			torch.LongTensor(self.species_id[ind]).to(self.device).view(-1),

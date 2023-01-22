@@ -10,19 +10,19 @@ class SpeciesTD3GA(SpeciesTD3):
         super().__init__(args, state_dim, action_dim, max_action, behavior_dim)
     
     def sample_action_net(self, net, state, evaluate=False):
-        action = self.select_action_net(net, state)
+        action_org = self.select_action_net(net, state)
         if evaluate:
-            return action
+            return action_org, action_org
         else: 
             action = (
-                action
+                action_org
                     + np.random.normal(0, self.max_action * self.args.expl_noise, size=self.action_dim)
                 ).clip(-self.max_action, self.max_action)
-            return action
+            return action, action_org
         
-    def select_action_net(self, net, state):
+    def select_action_net(self, net, state): 
         state = torch.FloatTensor(state.reshape(1, -1)).to(self.device)
-        action = net(state).cpu().data.numpy().flatten() 
+        action = net(state).cpu().data.numpy().flatten()
         return action
 
     def pg_update(self, net, species_id):

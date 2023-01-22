@@ -1,4 +1,4 @@
-import os, json
+import os, json, time
 from neat_rl.helpers.util import load_kdtree, add_to_archive, save_archive, load_archive
 
 from neat_rl.args import update_parser
@@ -136,8 +136,10 @@ def main(args):
                         json.dump(train_dict, f)
 
                     # Evolve the population if not rendering and a minimum number of trajectories have been collected
-                    if not args.render and env.td3ga.replay_buffer.size >= args.learning_starts:
+                    if not args.render and env.td3ga.replay_buffer.size >= args.batch_size * 8:
+                        start_time = time.time()
                         env.population.evolve()
+                        print("EVOLVE TIME: ", time.time() - start_time)
 
 
                 else:

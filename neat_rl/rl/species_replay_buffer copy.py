@@ -46,5 +46,5 @@ class SpeciesReplayBuffer:
 		)
 
 	def sample_states(self, batch_size):
-		ind = np.random.choice(np.arange(self.size), size=batch_size, replace=False)
+		ind = np.random.randint(0, self.size, size=batch_size)
 		return torch.FloatTensor(self.state[ind]).to(self.device)

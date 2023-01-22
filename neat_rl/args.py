@@ -8,7 +8,7 @@ def update_parser(parser):
 
     parser.add_argument("--lr", type=float, default=3e-4,
         help="Learning rate for actor and critic networks.")
-    parser.add_argument("--actor_lr", type=float, default=3e-4,
+    parser.add_argument("--actor_lr", type=float, default=6e-4,
         help="Learning rate for actor and critic networks.")
     parser.add_argument("--gamma", type=float, default=0.99,
         help="Gamma used for learning rate discount.")
@@ -16,9 +16,9 @@ def update_parser(parser):
         help="Value used for interpolating target policy.")
     parser.add_argument("--batch_size", type=int, default=256,
         help="Batch size for updating networks.")
-    parser.add_argument("--replay_capacity", type=int, default=262144,
+    parser.add_argument("--replay_capacity", type=int, default=131072,
         help="Maximum size of replay memory.")
-    parser.add_argument("--max_norm", type=float, default=1.0,
+    parser.add_argument("--max_norm", type=float, default=2.0,
         help="Maximum norm of gradient update.")
 
     parser.add_argument("--n_hidden", type=int, default=1,
@@ -54,7 +54,7 @@ def update_parser(parser):
     #     help="Hidden size of network.")
 
 
-    parser.add_argument("--org_lr", type=float, default=8e-4,
+    parser.add_argument("--org_lr", type=float, default=6e-4,
         help="Learning rate for an organism using policy updates.")
     parser.add_argument("--n_org_updates", type=int, default=64,
         help="Number of updates to perform for an organism.")
@@ -67,10 +67,12 @@ def update_parser(parser):
     parser.add_argument("--num_episodes", type=int, default=50,
         help="Number of episodes to run.")
 
-    parser.add_argument("--disc_lr", type=float, default=3e-4,
-        help="Probability of performing policy gradient updates instead of GA updates.")
+    parser.add_argument("--disc_lr", type=float, default=1e-3,
+        help="Learning rate of species discriminator.")
     parser.add_argument("--disc_lam", type=float, default=1.0,
         help="Reward scaling for discriminator.")
+    parser.add_argument("--disc_train_iter", type=int, default=8,
+        help="Number of iterations to train the discriminator.")
 
     parser.add_argument("--use_state_disc", action="store_true",
         help="Use state/actions discriminator.")  
@@ -90,7 +92,9 @@ def update_parser(parser):
         help="ISO sigma for random noise.")
     parser.add_argument("--line_sigma", type=float, default=0.05,
         help="Line sigma for interpolation noise.")
-        
+    parser.add_argument("--skew_val", type=float, default=-1.0,
+        help="Value used for skewing behavior distribution.")
+
 
     parser.add_argument("--num_species", type=int, default=1,
         help="Number of species to create.")

@@ -112,9 +112,10 @@ class GradientPopulation:
         for cur_species in self.species_list:
             cur_species.update_age()
             num_spawn = self.prune_species(cur_species)
+
             for org in cur_species.orgs:
                 org.age += 1
-
+            
             # Save new orgs in list to prevent breeding with new_org
             new_orgs = []
             for _ in range(num_spawn):

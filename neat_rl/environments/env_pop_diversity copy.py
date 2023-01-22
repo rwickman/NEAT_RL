@@ -3,7 +3,6 @@ import torch
 import random
 import QDgym
 from tqdm import tqdm
-import time
 
 from neat_rl.helpers.util import add_to_archive
 from neat_rl.rl.species_td3ga import SpeciesTD3GA
@@ -57,39 +56,33 @@ class EnvironmentGADiversity:
     def run(self, org, evaluate=False):        
         state = self.env.reset()
         done = False
-
+        import time
         species_id = self.population.org_id_to_species[org.id]
         if self.args.render:
             print(species_id)
         cur_step = 0 
         total_diversity_bonus = 0
-        exps = []
         while not done:
-            if not self.args.use_td3_diversity:
-                if self.td3ga.replay_buffer.size < self.args.learning_starts and not self.args.load and not evaluate:
-                    action, log_std = self.env.action_space.sample()
-                else:
-                    action, log_std, mean = self.td3ga.sample_action_net(org.net, state, evaluate or self.args.render)
-                    #action, log_std, mean = self.td3ga.select_action(state, torch.LongTensor([species_id]).to(self.td3ga.device), evaluate or self.args.render)   
+            if self.td3ga.replay_buffer.size < self.args.learning_starts and not self.args.load and not evaluate:
+                action = self.env.action_space.sample()
             else:
-                action, action_org = self.td3ga.sample_action_net(org.net, state, evaluate or self.args.render)
+                action = self.td3ga.sample_action_net(org.net, state, evaluate or self.args.render)   
 
             next_state, reward, done, info = self.env.step(action)
             behavior = self.env.desc
-
+            
 
             if not evaluate and not self.args.render:
-                if not self.args.use_td3_diversity:
-                    self.td3ga.replay_buffer.add(state, action, log_std, mean, next_state, reward, species_id, behavior, done)
-                else:
-                    exps.append([state, action, next_state, reward, species_id, behavior, done])
-
-                    
+                self.td3ga.replay_buffer.add(state, action, next_state, reward, species_id, behavior, done)
+                
             if not evaluate:
+                
+
                 if self.args.use_state_disc:
-                    # inp = torch.cat(
-                    #     (torch.FloatTensor(state), torch.FloatTensor(action))).to(self.td3ga.device)
-                    total_diversity_bonus += self.td3ga.discriminator(torch.FloatTensor(state).to(self.td3ga.device)).softmax(dim=-1)[species_id].item()
+                    state_logits, action_logits = self.td3ga.discriminator(torch.FloatTensor(state).to(self.td3ga.device), torch.FloatTensor(action).to(self.td3ga.device))
+                    total_diversity_bonus += state_logits.softmax(dim=-1)[species_id].item() + action_logits.softmax(dim=-1)[species_id].item() 
+                    #total_diversity_bonus += self.td3ga.discriminator(inp).softmax(dim=-1)[species_id].item()
+                    
                 elif self.args.use_state_only_disc:
                     total_diversity_bonus += self.td3ga.discriminator(torch.FloatTensor(state).to(self.td3ga.device)).softmax(dim=-1)[species_id].item()
 
@@ -97,7 +90,8 @@ class EnvironmentGADiversity:
                     total_diversity_bonus += self.td3ga.discriminator(torch.FloatTensor(action).to(self.td3ga.device)).softmax(dim=-1)[species_id].item()
                 else:
                     disc_logits = self.td3ga.discriminator(torch.FloatTensor(behavior).to(self.td3ga.device))
-                    diversity_bonus = disc_logits[species_id].item()
+                    
+                    diversity_bonus = disc_logits.softmax(dim=-1)[species_id].item()
 
                     total_diversity_bonus += diversity_bonus
 
@@ -112,13 +106,6 @@ class EnvironmentGADiversity:
             if self.args.render:
                 time.sleep(0.005)
 
-        if not evaluate and not self.args.render:
-            for exp in exps:
-                exp[-2] = behavior
-                self.td3ga.add_sample(*exp)
-            self.td3ga.behavior_distr.add(behavior, species_id)
-
-
 
         if self.args.render:
             print(behavior, cur_step)
@@ -131,14 +118,13 @@ class EnvironmentGADiversity:
 
                 
     def train(self):
-        start_time = time.time()
         max_fitness = None
         min_fitness = None
         total_fitness = 0
         random.shuffle(self.population.orgs)
 
         if self.args.render:
-            self.population.orgs = sorted(self.population.orgs, key=lambda x: x.best_fitness, reverse=False)
+            self.population.orgs = sorted(self.population.orgs, key=lambda x: x.best_fitness, reverse=True)
 
         for org in self.population.orgs:
             self.total_eval += 1
@@ -158,18 +144,13 @@ class EnvironmentGADiversity:
             
             if min_fitness is None or total_reward < min_fitness:
                 min_fitness = total_reward
-
-        # Train the discriminator
-        if not self.args.render and self.td3ga.behavior_distr.size >= self.args.batch_size:
-            self.td3ga.train_discriminator()
-
+        
         print("Replay buffer size", self.td3ga.replay_buffer.size)
         # if not self.args.render and self.td3ga.replay_buffer.size >= self.args.learning_starts:
         #     self.population.evolve()
         
         avg_fitness = total_fitness / len(self.population.orgs)
         fitness_range = max_fitness - min_fitness
-        print("TRAIN TIME: ", time.time() - start_time)
 
         return max_fitness, avg_fitness, fitness_range, total_fitness
 

@@ -71,7 +71,7 @@ class TD3:
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        # nn.utils.clip_grad_norm_(self.critic.parameters(), 2.0)
+        nn.utils.clip_grad_norm_(self.critic.parameters(), 2.0)
         self.critic_optimizer.step()
 
         if self.total_iter % 2048 == 0:
@@ -84,7 +84,7 @@ class TD3:
             # Optimize the actor 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
-            # nn.utils.clip_grad_norm_(self.actor.parameters(), 2.0)
+            nn.utils.clip_grad_norm_(self.actor.parameters(), 2.0)
             self.actor_optimizer.step()
 
 			# Update the frozen target models
