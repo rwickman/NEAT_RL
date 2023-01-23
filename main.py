@@ -126,14 +126,17 @@ def main(args):
                     train_dict["total_evals"] = env.total_eval
                     train_dict["best_org_avg_fitness"].append(best_org_avg_fitness) 
                     train_dict["best_org_first_fitness"].append(best_org_first_fitness)
-                    
-                    env.td3ga.save()
-                    
+                    # if i % 2 == 0:
+                    start_time = time.time()
+                    env.td3ga.save()            
                     save_population(env.population, args.save_dir)
                     save_archive(archive, archive_file)
-
                     with open(train_json_file, "w") as f:
                         json.dump(train_dict, f)
+
+                    print("SAVING TIME", time.time() - start_time)
+
+
 
                     # Evolve the population if not rendering and a minimum number of trajectories have been collected
                     if not args.render and env.td3ga.replay_buffer.size >= args.batch_size * 8:

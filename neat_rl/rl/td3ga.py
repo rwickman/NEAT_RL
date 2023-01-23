@@ -30,5 +30,13 @@ class TD3GA(TD3):
             actor_loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), 2.0)
             optimizer.step()
-        
-        self.critic_optimizer.zero_grad()
+
+    def diversity_pg_update(self, net, species_id):
+        optimizer = torch.optim.Adam(net.parameters(), lr=self.args.org_lr)
+        for _ in range(self.args.n_org_updates):
+            state = self.replay_buffer.sample_states(self.args.batch_size)
+            actor_loss = -self.behavior_critic.Q1(state, net(state)).mean()
+            optimizer.zero_grad()
+            actor_loss.backward()
+            torch.nn.utils.clip_grad_norm_(net.parameters(), 2.0)
+            optimizer.step()

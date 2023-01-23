@@ -63,7 +63,7 @@ class EnvironmentGADiversity:
             print(species_id)
         cur_step = 0 
         total_diversity_bonus = 0
-        exps = []
+        # exps = []
         while not done:
             if not self.args.use_td3_diversity:
                 if self.td3ga.replay_buffer.size < self.args.learning_starts and not self.args.load and not evaluate:
@@ -82,7 +82,7 @@ class EnvironmentGADiversity:
                 if not self.args.use_td3_diversity:
                     self.td3ga.replay_buffer.add(state, action, log_std, mean, next_state, reward, species_id, behavior, done)
                 else:
-                    exps.append([state, action, next_state, reward, species_id, behavior, done])
+                    self.td3ga.replay_buffer.add(state, action_org, next_state, reward, species_id, behavior, done)
 
                     
             if not evaluate:
@@ -112,11 +112,12 @@ class EnvironmentGADiversity:
             if self.args.render:
                 time.sleep(0.005)
 
-        if not evaluate and not self.args.render:
-            for exp in exps:
-                exp[-2] = behavior
-                self.td3ga.add_sample(*exp)
-            self.td3ga.behavior_distr.add(behavior, species_id)
+        # if not evaluate and not self.args.render:
+        #     for exp in exps:
+        #         exp[-2] = behavior
+        #         self.td3ga.add_sample(*exp)
+
+        #     self.td3ga.behavior_distr.add(behavior, species_id)
 
 
 
@@ -160,7 +161,7 @@ class EnvironmentGADiversity:
                 min_fitness = total_reward
 
         # Train the discriminator
-        if not self.args.render and self.td3ga.behavior_distr.size >= self.args.batch_size:
+        if not self.args.render:
             self.td3ga.train_discriminator()
 
         print("Replay buffer size", self.td3ga.replay_buffer.size)

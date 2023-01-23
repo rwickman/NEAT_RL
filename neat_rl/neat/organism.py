@@ -35,8 +35,9 @@ class Organism:
         self.fitness = fitness
         if diversity_bonus:
             cur_reward = fitness + self.args.disc_lam * diversity_bonus
-            self.bonus_avg = self.avg_fitness + self.args.disc_lam * diversity_bonus
+            #self.bonus_avg = self.avg_fitness + self.args.disc_lam * diversity_bonus
             #self.bonus_avg += (cur_reward - self.bonus_avg) / self._num_updates
+            self.bonus_avg = diversity_bonus#(diversity_bonus - self.bonus_avg) / self._num_updates
             #print("AFTER self.avg_fitness", self.avg_fitness, "self.bonus_avg", self.bonus_avg, "\n")
             self.bonus_best = max(self.bonus_best, cur_reward)
 

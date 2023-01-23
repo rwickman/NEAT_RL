@@ -30,6 +30,10 @@ class SpeciesTD3:
         self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species, self.args.emb_size).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.args.lr)
+
+        self.behavior_critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species, self.args.emb_size).to(self.device)
+        self.behavior_critic_target = copy.deepcopy(self.critic)
+        self.behavior_critic_optimizer = torch.optim.Adam(self.behavior_critic.parameters(), lr=self.args.lr)
         
         if self.args.use_state_disc:
             self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
@@ -50,7 +54,7 @@ class SpeciesTD3:
 
         self.total_iter = 0
         self.rl_save_file = os.path.join(self.args.save_dir, "td3.pt")
-        self.behavior_distr = BehaviorDistr(self.args, behavior_dim)
+        self.behavior_distr = BehaviorDistr(self.args)
 
         
     def select_action(self, state, species_id):
@@ -97,14 +101,19 @@ class SpeciesTD3:
             #disc_preds = torch.softmax(disc_logits, dim=-1)
             diversity_bonus = disc_logits.gather(-1, species_id.unsqueeze(1))
             
-            if not self.args.no_train_diversity:
-                # Add the diversity bonus
-                reward = reward + self.args.disc_lam * diversity_bonus 
+            # if not self.args.no_train_diversity:
+            #     # Add the diversity bonus
+            #     reward = reward + self.args.disc_lam * diversity_bonus 
 
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_state, next_action, species_id)
             target_Q = torch.min(target_Q1, target_Q2)
             target_Q = reward + terminated * self.args.gamma * target_Q
+
+            # Compute the target behavior Q value
+            target_Q1, target_Q2 = self.behavior_critic_target(next_state, next_action, species_id)
+            target_Q_behavior = torch.min(target_Q1, target_Q2)
+            behavior_target_Q = diversity_bonus + terminated * self.args.gamma * target_Q_behavior
            
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic(state, action, species_id)
@@ -118,7 +127,17 @@ class SpeciesTD3:
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.args.max_norm)
         self.critic_optimizer.step()
 
+        # Get current Q estimates
+        current_Q1, current_Q2 = self.behavior_critic(state, action, species_id)
+        
+        # Compute critic loss
+        behavior_critic_loss = F.mse_loss(current_Q1, behavior_target_Q) + F.mse_loss(current_Q2, behavior_target_Q)
 
+        # Optimize the critic
+        self.behavior_critic_optimizer.zero_grad()
+        behavior_critic_loss.backward()
+        nn.utils.clip_grad_norm_(self.behavior_critic.parameters(), self.args.max_norm)
+        self.behavior_critic_optimizer.step()
 
         # Delayed policy updates
         if self.total_iter % self.args.policy_freq == 0:
@@ -133,33 +152,39 @@ class SpeciesTD3:
 			# Update the frozen target models
             for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
                 target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
+            
+            for param, target_param in zip(self.behavior_critic.parameters(), self.behavior_critic_target.parameters()):
+                target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
+
 
             for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
                 target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
 
             if self.total_iter % 2048 == 0:
-                print("target_Q", target_Q[:10].view(-1), current_Q1[:10].view(-1))
+                print("behavior target_Q", current_Q1[:10].view(-1), behavior_target_Q[:10].view(-1))
+                print("behavior target_Q", current_Q1.mean(), behavior_target_Q.mean())
+
                 print("species_id", species_id[:10])
                 print("reward", reward[:10].view(-1))
-                print("actor_loss", actor_loss, "critic_loss", critic_loss)
+                print("actor_loss", actor_loss, "critic_loss", critic_loss, "behavior_critic_loss", behavior_critic_loss)
                 print("behavior", behavior[:10])
                 #print("skew_weights", skew_weights[:10], probs[:10], skew_weights.max(), probs.max(), skew_weights.sum(), probs.sum())
                 print("diversity_bonus", diversity_bonus.view(-1)[:10], "\n")
     
     def train_discriminator(self):
-        # self.behavior_distr.refresh(
-        #     torch.tensor(self.replay_buffer.behavior[:self.replay_buffer.size], dtype=torch.float32), torch.tensor(self.replay_buffer.species_id[:self.replay_buffer.size], dtype=torch.int64).view(-1))
-        self.behavior_distr.refresh()
+        if self.args.use_state_disc:
+            self.behavior_distr.refresh(
+                torch.tensor(self.replay_buffer.state[:self.replay_buffer.size], dtype=torch.float32),
+                torch.tensor(self.replay_buffer.species_id[:self.replay_buffer.size], dtype=torch.int64).view(-1))
+        else:
+            self.behavior_distr.refresh(
+                torch.tensor(self.replay_buffer.behavior[:self.replay_buffer.size], dtype=torch.float32),
+                torch.tensor(self.replay_buffer.species_id[:self.replay_buffer.size], dtype=torch.int64).view(-1))
+        #self.behavior_distr.refresh()
         for _ in range(self.args.disc_train_iter):
             # Train the discriminator
-            # if self.args.use_state_disc:
-            #     logits = self.discriminator(state)
-            # elif self.args.use_state_only_disc:
-            #     logits = self.discriminator(state)
-            # elif self.args.use_action_disc:
-            #     logits = self.discriminator(action)
-            # else:
             behavior, species_id = self.behavior_distr.sample()
+            #print("behavior", behavior)
             behavior = behavior.to(self.device)
             species_id = species_id.to(self.device)
 
@@ -175,8 +200,8 @@ class SpeciesTD3:
             disc_loss.backward()
             nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
             self.discriminator_optimizer.step()
-        print("behavior[:5]", behavior[:5], behavior[-10:])
-        print("disc_loss", disc_loss)
+        #print("behavior[:5]", behavior[:5], behavior[-10:])
+        #print("disc_loss", disc_loss)
 
     
     def save(self):
@@ -186,12 +211,14 @@ class SpeciesTD3:
             "actor_optimizer": self.actor_optimizer.state_dict(),
             "critic": self.critic.state_dict(),
             "critic_target": self.critic_target.state_dict(),
+            "behavior_critic": self.behavior_critic.state_dict(),
+            "behavior_critic_target": self.behavior_critic_target.state_dict(),
+            "behavior_critic_optimizer": self.behavior_critic_optimizer.state_dict(),
             "critic_optimizer": self.critic_optimizer.state_dict(),
             "discriminator": self.discriminator.state_dict(),
             "discriminator_optimizer": self.discriminator_optimizer.state_dict()
         }
         torch.save(model_dict, self.rl_save_file)
-        self.behavior_distr.save()
 
     def load(self):
         model_dict = torch.load(self.rl_save_file)
@@ -202,7 +229,10 @@ class SpeciesTD3:
         self.critic.load_state_dict(model_dict["critic"])
         self.critic_target.load_state_dict(model_dict["critic_target"])
         self.critic_optimizer.load_state_dict(model_dict["critic_optimizer"])
+
+        self.behavior_critic.load_state_dict(model_dict["behavior_critic"])
+        self.behavior_critic_target.load_state_dict(model_dict["behavior_critic_target"])
+        self.behavior_critic_optimizer.load_state_dict(model_dict["behavior_critic_optimizer"])
         self.discriminator.load_state_dict(model_dict["discriminator"])
         
         self.discriminator_optimizer.load_state_dict(model_dict["discriminator_optimizer"])
-        self.behavior_distr.load()

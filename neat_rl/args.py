@@ -71,7 +71,7 @@ def update_parser(parser):
         help="Learning rate of species discriminator.")
     parser.add_argument("--disc_lam", type=float, default=1.0,
         help="Reward scaling for discriminator.")
-    parser.add_argument("--disc_train_iter", type=int, default=8,
+    parser.add_argument("--disc_train_iter", type=int, default=64,
         help="Number of iterations to train the discriminator.")
 
     parser.add_argument("--use_state_disc", action="store_true",
@@ -106,9 +106,14 @@ def update_parser(parser):
         help="Percentage of organisms that will survive.")
     parser.add_argument("--non_exclusive", action="store_true",
         help="Allow organisms to be evaluated more than once .")
-    parser.add_argument("--diversty_bonus_sort", action="store_true",
+    parser.add_argument("--diversity_bonus_sort", action="store_true",
         help="Sort by organisms by diversity bonus reward.")
     parser.add_argument("--best_diversity_sort", action="store_true",
         help="Sort by organisms by best fitness score.")
+    parser.add_argument("--random_sort", action="store_true",
+        help="Sort organisms randomly.")
+    parser.add_argument("--only_pg", action="store_true",
+        help="Only perform PG updates.")
+    
     return parser
     
