@@ -99,13 +99,11 @@ def main(args):
                 if not args.render:
 
                     # Run all the organisms
-                    if args.non_exclusive:
-                        max_fitness, avg_fitness, fitness_range, total_fitness = env.train()
-                    else:
-                        max_fitness, avg_fitness, fitness_range, total_fitness = env.train_exclusive(i==1)
+                  
+                    max_fitness, avg_fitness, fitness_range, total_fitness = env.train()
+                  
 
-                    best_org = env.population.get_best()
-                    best_org_avg_fitness, best_org_first_fitness, eval_max_fitness = env.evaluate_10(best_org)
+
                     if len(archive) > 0:
                         total_fitness_archive = sum(list(archive.values()))
                         best_fitness = max(list(archive.values()))
@@ -113,9 +111,17 @@ def main(args):
                         total_fitness_archive = 0
                         best_fitness = max_fitness
                     if len(train_dict["max_fitness"]) >= 1:
-                        cur_max_fitness = max(train_dict["max_fitness"][-1], best_fitness, eval_max_fitness)
+                        cur_max_fitness = max(train_dict["max_fitness"][-1], best_fitness)
                     else:
-                        cur_max_fitness = max(best_fitness, eval_max_fitness)
+                        cur_max_fitness = best_fitness
+
+
+                    best_org = env.population.get_best()
+                    if i % 64 == 0:
+                        best_org_avg_fitness, best_org_first_fitness, eval_max_fitness = env.evaluate_10(best_org)
+                        train_dict["best_org_avg_fitness"].append(best_org_avg_fitness) 
+                        train_dict["best_org_first_fitness"].append(best_org_first_fitness)
+                        cur_max_fitness = max(cur_max_fitness, eval_max_fitness)
 
                     train_dict["max_fitness"].append(cur_max_fitness)
                     train_dict["total_fitness"].append(total_fitness)
@@ -124,8 +130,7 @@ def main(args):
                     train_dict["avg_fitness"].append(avg_fitness)
                     train_dict["coverage"].append(len(archive))
                     train_dict["total_evals"] = env.total_eval
-                    train_dict["best_org_avg_fitness"].append(best_org_avg_fitness) 
-                    train_dict["best_org_first_fitness"].append(best_org_first_fitness)
+                    
                     # if i % 2 == 0:
                     start_time = time.time()
                     env.td3ga.save()            
@@ -139,7 +144,7 @@ def main(args):
 
 
                     # Evolve the population if not rendering and a minimum number of trajectories have been collected
-                    if not args.render and env.td3ga.replay_buffer.size >= args.batch_size * 8:
+                    if not args.render and env.td3ga.replay_buffer.size >= args.learning_starts:
                         start_time = time.time()
                         env.population.evolve()
                         print("EVOLVE TIME: ", time.time() - start_time)

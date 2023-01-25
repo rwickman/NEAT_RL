@@ -58,25 +58,11 @@ class GradientPopulation:
         return orgs
 
     def breed(self, cur_species):
-        rand_int = random.randint(0, 1)
-        if self.args.no_train_diversity:
-            rand_int = random.randint(0, 1)
-        else:
-            rand_int = random.randint(0, 2)
-        
-        if self.args.only_pg:
-            rand_int = 0
-
-        if rand_int == 0:
+        if random.random() <= self.args.pg_rate:
             parent_1 = random.choice(cur_species.orgs)
             parent_2 = parent_1
             child_net = parent_1.net.copy(transfer_weights=True)
             self.td3ga.pg_update(child_net, cur_species.species_id)
-        elif rand_int == 2:
-            parent_1 = random.choice(cur_species.orgs)
-            parent_2 = parent_1
-            child_net = parent_1.net.copy(transfer_weights=True)
-            self.td3ga.diversity_pg_update(child_net, cur_species.species_id)
         else:
             if len(cur_species.orgs) > 1:
                 parent_1, parent_2 = random.sample(cur_species.orgs, 2)

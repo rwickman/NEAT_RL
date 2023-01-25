@@ -2,7 +2,7 @@ import argparse
 
 def update_parser(parser):
     parser.add_argument("--env", default="QDHalfCheetahBulletEnv-v0",
-        help="Environment to test.")
+        help="Environment to test (e.g., QDHopperBulletEnv-v0, QDWalker2DBulletEnv-v0, QDHalfCheetahBulletEnv-v0, etc.).")
     parser.add_argument("--load", action="store_true",
         help="Load the models.")
 
@@ -16,7 +16,9 @@ def update_parser(parser):
         help="Value used for interpolating target policy.")
     parser.add_argument("--batch_size", type=int, default=256,
         help="Batch size for updating networks.")
-    parser.add_argument("--replay_capacity", type=int, default=131072,
+    parser.add_argument("--replay_capacity", type=int, default=262144,
+        help="Maximum size of replay memory.")
+    parser.add_argument("--behavior_capacity", type=int, default=262144,
         help="Maximum size of replay memory.")
     parser.add_argument("--max_norm", type=float, default=2.0,
         help="Maximum norm of gradient update.")
@@ -37,11 +39,11 @@ def update_parser(parser):
         help="Noise used in policy prediction.")
     parser.add_argument("--policy_freq", type=int, default=2,
         help="How often to update the policy w.r.t. the critic.")
-    parser.add_argument("--update_freq", type=int, default=16,
+    parser.add_argument("--update_freq", type=int, default=8,
         help="How often to update the policy and critic.")
 
 
-    parser.add_argument("--learning_starts", type=int, default=10000,
+    parser.add_argument("--learning_starts", type=int, default=1000,
         help="Number of timesteps to elapse before training.")
 
 
@@ -104,8 +106,6 @@ def update_parser(parser):
         help="Total number of organism evaluations to run.")
     parser.add_argument("--survival_rate", type=float, default=0.25, 
         help="Percentage of organisms that will survive.")
-    parser.add_argument("--non_exclusive", action="store_true",
-        help="Allow organisms to be evaluated more than once .")
     parser.add_argument("--diversity_bonus_sort", action="store_true",
         help="Sort by organisms by diversity bonus reward.")
     parser.add_argument("--best_diversity_sort", action="store_true",

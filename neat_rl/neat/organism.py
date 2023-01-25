@@ -30,14 +30,14 @@ class Organism:
 
         self._num_updates += 1
         # Calculation the moving average
-        self._fitness_avg += (fitness - self._fitness_avg) / self._num_updates
+        self._fitness_avg = (fitness - self._fitness_avg) / self._num_updates
         self.best_fitness = max(fitness, self.best_fitness)
         self.fitness = fitness
         if diversity_bonus:
-            cur_reward = fitness + self.args.disc_lam * diversity_bonus
+            cur_reward = self._fitness_avg + self.args.disc_lam * diversity_bonus
             #self.bonus_avg = self.avg_fitness + self.args.disc_lam * diversity_bonus
             #self.bonus_avg += (cur_reward - self.bonus_avg) / self._num_updates
-            self.bonus_avg = diversity_bonus#(diversity_bonus - self.bonus_avg) / self._num_updates
+            self.bonus_avg = cur_reward#fitness + self.args.disc_lam * diversity_bonus#diversity_bonus#(diversity_bonus - self.bonus_avg) / self._num_updates
             #print("AFTER self.avg_fitness", self.avg_fitness, "self.bonus_avg", self.bonus_avg, "\n")
             self.bonus_best = max(self.bonus_best, cur_reward)
 
