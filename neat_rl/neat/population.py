@@ -2,7 +2,6 @@ import random
 
 from neat_rl.neat.organism import Organism
 from neat_rl.neat.species import Species
-from neat_rl.neat.mutator import GradientMutator
 from neat_rl.neat.reproduction import GradientReproduction
 
 class GradientPopulation:

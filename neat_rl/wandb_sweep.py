@@ -6,6 +6,8 @@ class HyperparameterTuner:
     def __init__(self, args):
         self.args = args
         self.project = self.args.env + "-td3"
+        if not self.args.use_state_disc:
+            self.project += "-behavior" 
         
 
     def start(self):
