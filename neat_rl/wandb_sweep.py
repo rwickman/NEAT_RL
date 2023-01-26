@@ -54,10 +54,10 @@ class HyperparameterTuner:
             'metric': {'goal': 'maximize', 'name': 'max_total_reward'},
             'parameters': 
             {
-                'num_species': {'values': [4, 8, 16]},
-                'pop_size': {'values': [32, 64, 128, 256]},
-                'pg_rate': {'values': [0.25, 0.5, 0.75, 1.0]},
-                'skew_val': {'values': [-0.25, -0.5, -0.75, -1.0]},
+                'num_species': {'values': [4, 8, 16, 32]},
+                'pop_size': {'values': [64, 128, 256]},
+                'pg_rate': {'values': [0.75, 1.0]},
+                'skew_val': {'max': -0.01, 'min': -3.0},
                 'survival_rate': {'max': 0.5, 'min': 0.2},
                 'disc_lam': {'max': 0.2, 'min': 0.0}
             }

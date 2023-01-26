@@ -50,15 +50,20 @@ class BehaviorDistr:
         sample_behaviors = torch.FloatTensor(self.behaviors[indices].tolist())
         sample_species_id = torch.LongTensor(self.species_ids[indices].tolist())
 
+        # # Resample behaviors
+        if self.args.resample_behavior:
+            resample_prob = torch.zeros(self.args.batch_size).uniform_()
+            sampled_skewed_behaviors = self.skewed_distr.sample(torch.Size([self.args.batch_size]))
+            sample_behaviors[resample_prob <= self.args.resample_behavior_prob] = sampled_skewed_behaviors[resample_prob <= self.args.resample_behavior_prob] 
+
         return sample_behaviors, sample_species_id 
 
     def refresh(self):
         behaviors = torch.tensor(self.behaviors[:self.size], dtype=torch.float32)
         self.sample_probs, _ = self.behavior_weights(behaviors, behaviors.mean(0), behaviors.std(0) + 1e-6)
         self.sample_probs = self.sample_probs.numpy()
+    
     def behavior_weights(self, behaviors, mean, std):
-        
-
         # Fit distribution on the behaviors
         distr = Normal(mean, std)
         
@@ -68,11 +73,11 @@ class BehaviorDistr:
         skewed_log_probs = log_probs * self.args.skew_val
         skewed_probs = self._relative_prob(skewed_log_probs)
         
-        # skewed_mean = skewed_probs.matmul(behaviors)
+        skewed_mean = skewed_probs.matmul(behaviors)
         # print("skewed_mean", skewed_mean, "old_mean", mean)
-        # skewed_std = ((behaviors - skewed_mean) ** 2).mean(dim=0) ** 0.5
+        skewed_std = ((behaviors - skewed_mean) ** 2).mean(dim=0) ** 0.5
         # print("skewed_std", skewed_std, "old std", std)
-        # self.skewed_distr = Normal(skewed_mean, skewed_std + 1e-6)
+        self.skewed_distr = Normal(skewed_mean, skewed_std + 1e-6)
 
         
         

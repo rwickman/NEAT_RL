@@ -34,7 +34,10 @@ class SpeciesTD3GA(SpeciesTD3):
             #torch.IntTensor([species_id]).to(self.device)
             actor_loss = -self.critic.Q1(state, net(state), species_ids).mean()
             optimizer.zero_grad()
+
             
             actor_loss.backward()
-            torch.nn.utils.clip_grad_norm_(net.parameters(), self.args.max_norm)
+            # print("ACTOR GRAD", net.in_layer.weight.grad.max(), net.in_layer.weight.grad.min())
+            # torch.nn.utils.clip_grad_norm_(net.parameters(), self.args.max_norm)
+            # print("AFTER ACTOR GRAD", net.in_layer.weight.grad.max(), net.in_layer.weight.grad.min(), "\n")
             optimizer.step()

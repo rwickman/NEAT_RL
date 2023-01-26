@@ -11,7 +11,10 @@ def print_stats(save_dir):
 
     with open(train_dict_file) as f:
         train_dict = json.load(f)
-
+    
+    org_id_to_species = pop_dict["org_id_to_species"]
+    avg_behavior = {}
+    species_sizes = {}
     
     max_age = 0
     max_generation = 0
@@ -25,6 +28,22 @@ def print_stats(save_dir):
         min_generation = min(org_dict["generation"], min_generation)
         avg_generation += org_dict["generation"]
         avg_age += org_dict["age"]
+        species_id = org_id_to_species[str(org_dict["id"])]
+        
+        # Add to the behavior sum
+        if species_id not in avg_behavior:
+            avg_behavior[species_id] = np.array(org_dict["behavior"])  
+            species_sizes[species_id] = 1
+        else:
+            avg_behavior[species_id] += np.array(org_dict["behavior"])  
+            species_sizes[species_id] += 1
+    
+    # Average out the behavior of each species
+    for k in range(len(avg_behavior)):
+        avg_behavior[k] = avg_behavior[k] / species_sizes[k]
+        print(f"SPECIES {k} AVG BEHAVIOR {avg_behavior[k]}")
+
+
     
     print("TOTAL GENERATIONS:", pop_dict["generation"])
     print("MAX AGE:", max_age)
@@ -35,7 +54,8 @@ def print_stats(save_dir):
     print("COVERAGE LAST 10:", train_dict["coverage"][-10:])
     print("total_fitness_archive", train_dict["total_fitness_archive"][-5:])
     print("MAX FITNESS:", train_dict["max_fitness"][-1])
-        
+    
+
 def plot(save_dir):
     train_dict_file = os.path.join(save_dir, "train_dict.json")
 

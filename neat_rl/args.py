@@ -114,6 +114,12 @@ def update_parser(parser):
         help="Sort organisms randomly.")
     parser.add_argument("--only_pg", action="store_true",
         help="Only perform PG updates.")
-    
+    parser.add_argument("--resample_species", action="store_true",
+        help="Resample the species for trajectories.")    
+    parser.add_argument("--resample_behavior", action="store_true",
+        help="Resample the species for trajectories.")
+    parser.add_argument("--resample_behavior_prob", type=float, default=0.1,
+        help="Probability of resampling a behavior.")
+   
     return parser
     

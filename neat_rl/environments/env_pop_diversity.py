@@ -119,7 +119,7 @@ class EnvironmentGADiversity:
         random.shuffle(self.population.orgs)
 
         if self.args.render:
-            self.population.orgs = sorted(self.population.orgs, key=lambda x: x.best_fitness, reverse=False)
+            self.population.orgs = sorted(self.population.orgs, key=lambda x: x.avg_fitness, reverse=False)
 
         for org in self.population.orgs:
             self.total_eval += 1

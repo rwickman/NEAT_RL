@@ -46,7 +46,7 @@ class SpeciesTD3:
         self.critic_loss_fn = nn.MSELoss()
         self.disc_loss_fn = nn.CrossEntropyLoss()
 
-        self.replay_buffer = SpeciesReplayBuffer(state_dim, action_dim, behavior_dim, self.args.replay_capacity)
+        self.replay_buffer = SpeciesReplayBuffer(state_dim, action_dim, behavior_dim, self.args.replay_capacity, self.args.resample_species)
 
         self.total_iter = 0
         self.rl_save_file = os.path.join(self.args.save_dir, "td3.pt")
@@ -73,7 +73,9 @@ class SpeciesTD3:
         self.total_iter += 1
 
         state, action, action_org, next_state, reward, species_id, behavior, terminated = self.replay_buffer.sample(self.args.batch_size)
-
+        if self.args.resample_species:
+            species_id = torch.randint(0, self.args.num_species, torch.Size([self.args.batch_size])).to(self.device)
+        
         with torch.no_grad():
             # Select action according to policy and add clipped noise
             noise = (
@@ -159,7 +161,7 @@ class SpeciesTD3:
             disc_loss.backward()
             #nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
             self.discriminator_optimizer.step()
-        
+        print("behavior[:5]", behavior[:5])
         print("disc_loss", disc_loss)
 
     
