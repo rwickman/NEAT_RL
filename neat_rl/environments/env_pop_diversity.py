@@ -4,7 +4,9 @@ import random
 import QDgym
 from tqdm import tqdm
 import time
+import math
 
+from torch.nn.functional import log_softmax
 from neat_rl.helpers.util import add_to_archive
 from neat_rl.rl.species_td3ga import SpeciesTD3GA
 from neat_rl.neat.population import GradientPopulation
@@ -73,10 +75,11 @@ class EnvironmentGADiversity:
             next_state, reward, done, info = self.env.step(action)
             behavior = self.env.desc
 
-            if self.args.use_state_disc:
-                self.td3ga.behavior_distr.add(state, species_id)
-                total_diversity_bonus += self.td3ga.discriminator(torch.FloatTensor(state).to(self.td3ga.device))[species_id].item()
-                
+            if self.args.render:
+                if self.args.use_state_disc:
+                    total_diversity_bonus += self.td3ga.get_diversity(state, species_id)
+                else:
+                    total_diversity_bonus += self.td3ga.get_diversity(behavior, species_id)
 
             if not evaluate and not self.args.render:
                 exps.append([state, action, action_org, next_state, reward, species_id, behavior, done])
@@ -91,14 +94,14 @@ class EnvironmentGADiversity:
             if self.args.render:
                 time.sleep(0.005)
         
-        if not self.args.use_state_disc:
-            total_diversity_bonus = self.td3ga.discriminator(torch.FloatTensor(behavior).to(self.td3ga.device))[species_id].item()
-            self.td3ga.behavior_distr.add(behavior, species_id)
+        # if not self.args.use_state_disc:
+        #     total_diversity_bonus = self.td3ga.discriminator(torch.FloatTensor(behavior).to(self.td3ga.device))[species_id].item()
+        #     self.td3ga.behavior_distr.add(behavior, species_id)
 
 
         if not evaluate and not self.args.render:
             for exp in exps:
-                exp[-2] = behavior
+                #exp[-2] = behavior
                 self.td3ga.replay_buffer.add(*exp)
 
         if self.args.render:
@@ -141,12 +144,10 @@ class EnvironmentGADiversity:
                 min_fitness = total_reward
 
         # Train the discriminator
-        if not self.args.render and self.td3ga.replay_buffer.size >= self.args.learning_starts and not self.args.no_use_disc:
-            self.td3ga.train_discriminator()
+        # if not self.args.render and self.td3ga.replay_buffer.size >= self.args.learning_starts and not self.args.no_use_disc:
+        #     self.td3ga.train_discriminator()
 
         print("Replay buffer size", self.td3ga.replay_buffer.size)
-        # if not self.args.render and self.td3ga.replay_buffer.size >= self.args.learning_starts:
-        #     self.population.evolve()
         
         avg_fitness = total_fitness / len(self.population.orgs)
         fitness_range = max_fitness - min_fitness

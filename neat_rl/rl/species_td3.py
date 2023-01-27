@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
+import math
+from torch.nn.functional import log_softmax
 from neat_rl.networks.species_actor import SpeciesActor
 from neat_rl.networks.species_critic import SpeciesCritic
 from neat_rl.networks.discriminator import Discriminator 
@@ -68,12 +70,15 @@ class SpeciesTD3:
             ).clip(-self.max_action, self.max_action)
         return action
     
+    def get_diversity(self, behavior, species_id):
+        return log_softmax(self.discriminator(torch.FloatTensor(behavior).to(self.device)), dim=-1)[species_id].item() - math.log(1/self.args.num_species)
 
     def train(self):
         self.total_iter += 1
 
         state, action, action_org, next_state, reward, species_id, behavior, terminated = self.replay_buffer.sample(self.args.batch_size)
         if self.args.resample_species:
+            org_species = species_id
             species_id = torch.randint(0, self.args.num_species, torch.Size([self.args.batch_size])).to(self.device)
         
         with torch.no_grad():
@@ -95,11 +100,17 @@ class SpeciesTD3:
             else:    
                 disc_logits = self.discriminator(behavior)
 
-            diversity_bonus = disc_logits.gather(-1, species_id.unsqueeze(1))
-            
+            diversity_bonus = log_softmax(disc_logits, dim=-1).gather(-1, species_id.unsqueeze(1))  - math.log(1/self.args.num_species)
             if not self.args.no_train_diversity:
-                # Add the diversity bonus
-                reward = reward + self.args.disc_lam * diversity_bonus 
+                #print("BEFORE reward", reward[:10])
+                reward = reward + self.args.disc_lam * diversity_bonus
+                #print("AFTER reward", reward[:10], "\n")
+                # if self.args.use_state_disc:
+                #     # Add the diversity bonus
+                #     reward = reward + self.args.disc_lam * diversity_bonus 
+                # else:
+                #     reward = reward + self.args.disc_lam * diversity_bonus
+
 
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_state, next_action, species_id)
@@ -117,7 +128,21 @@ class SpeciesTD3:
         critic_loss.backward()
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.args.max_norm)
         self.critic_optimizer.step()
+    
+        if self.args.use_state_disc:
+            logits = self.discriminator(state)
+        else:
+            logits = self.discriminator(behavior)
 
+        if self.args.resample_species:
+            disc_loss = self.disc_loss_fn(logits, org_species)
+        else:
+            disc_loss = self.disc_loss_fn(logits, species_id)
+            
+        self.discriminator_optimizer.zero_grad()
+        disc_loss.backward()
+        self.discriminator_optimizer.step()
+        
         # Delayed policy updates
         if self.total_iter % self.args.policy_freq == 0:
             actor_loss = -self.critic.Q1(state, self.actor(state, species_id), species_id).mean()
@@ -140,7 +165,7 @@ class SpeciesTD3:
 
                 print("species_id", species_id[:10])
                 print("reward", reward[:10].view(-1))
-                print("actor_loss", actor_loss, "critic_loss", critic_loss)
+                print("actor_loss", actor_loss, "critic_loss", critic_loss, "disc_loss", disc_loss)
                 print("behavior", behavior[:10])
                 #print("skew_weights", skew_weights[:10], probs[:10], skew_weights.max(), probs.max(), skew_weights.sum(), probs.sum())
                 print("diversity_bonus", diversity_bonus.view(-1)[:10], "\n")
@@ -161,7 +186,7 @@ class SpeciesTD3:
             disc_loss.backward()
             #nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
             self.discriminator_optimizer.step()
-        print("behavior[:5]", behavior[:5])
+        # print("behavior[:5]", behavior[:5])
         print("disc_loss", disc_loss)
 
     
@@ -188,5 +213,4 @@ class SpeciesTD3:
         self.critic_target.load_state_dict(model_dict["critic_target"])
         self.critic_optimizer.load_state_dict(model_dict["critic_optimizer"])
         self.discriminator.load_state_dict(model_dict["discriminator"])
-        
         self.discriminator_optimizer.load_state_dict(model_dict["discriminator_optimizer"])

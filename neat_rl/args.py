@@ -8,7 +8,7 @@ def update_parser(parser):
 
     parser.add_argument("--lr", type=float, default=3e-4,
         help="Learning rate for actor and critic networks.")
-    parser.add_argument("--actor_lr", type=float, default=6e-4,
+    parser.add_argument("--actor_lr", type=float, default=3e-4,
         help="Learning rate for actor and critic networks.")
     parser.add_argument("--gamma", type=float, default=0.99,
         help="Gamma used for learning rate discount.")
@@ -69,7 +69,7 @@ def update_parser(parser):
     parser.add_argument("--num_episodes", type=int, default=50,
         help="Number of episodes to run.")
 
-    parser.add_argument("--disc_lr", type=float, default=1e-3,
+    parser.add_argument("--disc_lr", type=float, default=3e-4,
         help="Learning rate of species discriminator.")
     parser.add_argument("--disc_lam", type=float, default=1.0,
         help="Reward scaling for discriminator.")

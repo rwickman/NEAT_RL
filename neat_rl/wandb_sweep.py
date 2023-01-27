@@ -21,7 +21,6 @@ class HyperparameterTuner:
         self.args.pop_size = wandb.config.pop_size
         self.args.disc_lam = wandb.config.disc_lam
         self.args.survival_rate = wandb.config.survival_rate
-        self.args.skew_val = wandb.config.skew_val
         self.args.pg_rate = wandb.config.pg_rate
         
         kdt = load_kdtree(self.args.env)
@@ -55,11 +54,10 @@ class HyperparameterTuner:
             'parameters': 
             {
                 'num_species': {'values': [4, 8, 16, 32]},
-                'pop_size': {'values': [64, 128, 256]},
-                'pg_rate': {'values': [0.75, 1.0]},
-                'skew_val': {'max': -0.01, 'min': -3.0},
+                'pop_size': {'values': [64, 128]},
+                'pg_rate': {'values': [0.5, 0.75, 1.0]},
                 'survival_rate': {'max': 0.5, 'min': 0.2},
-                'disc_lam': {'max': 0.2, 'min': 0.0}
+                'disc_lam': {'max': 0.1, 'min': 0.0}
             }
         }
 
