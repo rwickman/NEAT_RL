@@ -136,7 +136,7 @@ class EnvironmentGADiversity:
 
                 # Attempt to add to archive
                 if self.kdt is not None:
-                    add_to_archive(org, self.archive, self.archive_species_ids, self.kdt, self.population.org_id_to_species)
+                    add_to_archive(org, self.archive, self.archive_species_ids, self.kdt, self.population.org_id_to_species[org.id])
 
             if max_fitness is None or total_reward > max_fitness:
                 max_fitness = total_reward
