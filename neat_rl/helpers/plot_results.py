@@ -79,7 +79,7 @@ def plot_species(save_dir):
 
 def print_archive(save_dir, env):
     archive_file = os.path.join(save_dir, "archive.json")
-    archive = load_archive(archive_file)
+    archive, _ = load_archive(archive_file)
     kdt = load_kdtree(env)
     kdt_points = np.array(kdt.data)
     archive_points = list(archive.keys())

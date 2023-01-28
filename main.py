@@ -52,7 +52,7 @@ def main(args):
                 with open(train_json_file) as f:
                     train_dict = json.load(f)
                 
-                archive = load_archive(archive_file)
+                archive, archive_species_ids = load_archive(archive_file)
             else:
                 train_dict = {
                     "max_fitness": [],
@@ -66,9 +66,10 @@ def main(args):
                     "total_evals": 0
                 }
                 archive = {}
+                archive_species_ids = {}
 
             # if args.use_td3_diversity:
-            env = EnvironmentGADiversity(args, archive, kdt)
+            env = EnvironmentGADiversity(args, archive, archive_species_ids, kdt)
             # else:
             #     env = EnvironmentGADiversitySAC(args, archive, kdt)
 
@@ -135,7 +136,7 @@ def main(args):
                     start_time = time.time()
                     env.td3ga.save()            
                     save_population(env.population, args.save_dir)
-                    save_archive(archive, archive_file)
+                    save_archive(archive, archive_species_ids, archive_file)
                     with open(train_json_file, "w") as f:
                         json.dump(train_dict, f)
 

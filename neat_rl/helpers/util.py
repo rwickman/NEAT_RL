@@ -32,7 +32,7 @@ def load_kdtree(env):
     
     return kdt
 
-def add_to_archive(org, archive, kdt):
+def add_to_archive(org, archive, archive_species_ids, kdt, species_id):
     niche_index = kdt.query([org.behavior], k=1)[1][0][0]
     niche = kdt.data[niche_index]
     n = tuple(niche)
@@ -41,14 +41,19 @@ def add_to_archive(org, archive, kdt):
     if n in archive:
         if org.best_fitness > archive[n]:
             archive[n] = org.best_fitness
+            archive_species_ids[n] = species_id
     else:
         archive[n] = org.best_fitness
+        archive_species_ids[n] = species_id
 
-def save_archive(archive, save_file):
+def save_archive(archive, archive_species_ids, save_file):
     archive_items = list(archive.items())
+    archive_species_ids_items = list(archive_species_ids.items())
+
     
     archive_dict = {
         "items": archive_items,
+        "species_ids": archive_species_ids_items
     }
 
     with open(save_file, "w") as f:
@@ -57,13 +62,18 @@ def save_archive(archive, save_file):
 
 def load_archive(save_file):
     archive = {}
+    archive_species_ids = {}
     with open(save_file) as f:
         archive_dict = json.load(f)
     
     for item in archive_dict["items"]:
         archive[tuple(item[0])] = item[1]
-    
-    return archive
+
+    if "species_ids" in archive_dict:
+        for item in archive_dict["species_ids"]:
+            archive_species_ids[tuple(item[0])] = item[1]
+        
+    return archive, archive_species_ids
 
 
      

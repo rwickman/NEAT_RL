@@ -60,10 +60,8 @@ def update_parser(parser):
         help="Learning rate for an organism using policy updates.")
     parser.add_argument("--n_org_updates", type=int, default=64,
         help="Number of updates to perform for an organism.")
-    parser.add_argument("--pg_rate", type=float, default=0.5,
-        help="Probability of performing policy gradient updates instead of GA updates.")        
-    parser.add_argument("--emb_size", type=int, default=128,
-        help="Embedding size for species.")
+    parser.add_argument("--pg_rate", type=float, default=1.0,
+        help="Probability of performing policy gradient updates instead of GA updates.")
     parser.add_argument("--hyperparameter_tune", action="store_true",
         help="Tune the hyperparameters.")
     parser.add_argument("--num_episodes", type=int, default=50,
@@ -71,7 +69,7 @@ def update_parser(parser):
 
     parser.add_argument("--disc_lr", type=float, default=3e-4,
         help="Learning rate of species discriminator.")
-    parser.add_argument("--disc_lam", type=float, default=1.0,
+    parser.add_argument("--disc_lam", type=float, default=0.01,
         help="Reward scaling for discriminator.")
     parser.add_argument("--disc_train_iter", type=int, default=64,
         help="Number of iterations to train the discriminator.")

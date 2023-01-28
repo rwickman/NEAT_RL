@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from neat_rl.networks.util import weights_init_
 
 class SpeciesActor(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, max_action, num_species, emb_dim):
+    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, max_action, num_species):
         super().__init__()
         self.device = "cpu"
         self.num_species = num_species

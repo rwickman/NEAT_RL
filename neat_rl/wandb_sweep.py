@@ -25,7 +25,8 @@ class HyperparameterTuner:
         
         kdt = load_kdtree(self.args.env)
         archive = {}
-        env = EnvironmentGADiversity(self.args, archive, kdt)
+        archive_species_ids = {}
+        env = EnvironmentGADiversity(self.args, archive, archive_species_ids, kdt)
         
         epoch = 0
         cur_max_total_reward = None

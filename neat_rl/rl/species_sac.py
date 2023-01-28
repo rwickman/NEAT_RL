@@ -17,11 +17,11 @@ class SpeciesSAC:
         self.args = args
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species, self.args.emb_size).to(self.device)
+        self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.args.lr)
         
-        self.actor = SpeciesGaussianPolicy(state_dim, action_dim, self.args.critic_hidden_size, self.args.num_species, self.args.emb_size, action_space=action_space).to(self.device)
+        self.actor = SpeciesGaussianPolicy(state_dim, action_dim, self.args.critic_hidden_size, self.args.num_species, action_space=action_space).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.args.actor_lr)
         self.replay_buffer = SpeciesReplayBufferSAC(state_dim, action_dim, behavior_dim, self.args.replay_capacity)
         self.total_iter = 0

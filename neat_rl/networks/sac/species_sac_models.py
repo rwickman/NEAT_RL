@@ -10,7 +10,7 @@ epsilon = 1e-6
 
 
 class SpeciesGaussianPolicy(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim, num_species, emb_dim, action_space=None):
+    def __init__(self, state_dim, action_dim, hidden_dim, num_species, action_space=None):
         super().__init__()
         self.device = ""
         self.num_species = num_species

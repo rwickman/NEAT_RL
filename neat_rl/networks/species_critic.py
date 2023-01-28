@@ -6,7 +6,7 @@ from neat_rl.networks.util import weights_init_
 
 
 class SpeciesCriticNet(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species, emb_dim):
+    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species):
         super().__init__()
         self.device = "cpu"
         self.num_species = num_species
@@ -32,11 +32,11 @@ class SpeciesCriticNet(nn.Module):
         return x
 
 class SpeciesCritic(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size):
+    def __init__(self, state_dim, action_dim, hidden_size, n_hidden, num_species):
         super().__init__()
         self.device = "cpu"
-        self.critic_1 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size)
-        self.critic_2 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species, emb_size)
+        self.critic_1 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species)
+        self.critic_2 = SpeciesCriticNet(state_dim, action_dim, hidden_size, n_hidden, num_species)
 
     def Q1(self, state, action, species_ids):
         return self.critic_1(state, action, species_ids)

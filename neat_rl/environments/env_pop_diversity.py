@@ -16,9 +16,10 @@ from neat_rl.networks.sac.sac_models import GaussianPolicy
 from neat_rl.rl.species_sac import SpeciesSAC
 
 class EnvironmentGADiversity:
-    def __init__(self, args, archive, kdt):
+    def __init__(self, args, archive, archive_species_ids, kdt):
         self.args = args
         self.archive = archive
+        self.archive_species_ids = archive_species_ids
         self.kdt = kdt
 
         if self.args.render:
@@ -135,7 +136,7 @@ class EnvironmentGADiversity:
 
                 # Attempt to add to archive
                 if self.kdt is not None:
-                    add_to_archive(org, self.archive, self.kdt)
+                    add_to_archive(org, self.archive, self.archive_species_ids, self.kdt, self.population.org_id_to_species)
 
             if max_fitness is None or total_reward > max_fitness:
                 max_fitness = total_reward

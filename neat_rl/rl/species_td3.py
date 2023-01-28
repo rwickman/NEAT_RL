@@ -26,11 +26,11 @@ class SpeciesTD3:
         self.args.noise_clip = args.noise_clip * max_action
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        self.actor = SpeciesActor(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.max_action, self.args.num_species, self.args.emb_size).to(self.device)
+        self.actor = SpeciesActor(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.max_action, self.args.num_species).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.args.actor_lr)
 
-        self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species, self.args.emb_size).to(self.device)
+        self.critic = SpeciesCritic(state_dim, action_dim, self.args.critic_hidden_size, self.args.n_hidden, self.args.num_species).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.args.lr)
         
