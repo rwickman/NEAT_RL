@@ -3,7 +3,8 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
-import math
+import math, random
+
 from torch.nn.functional import log_softmax
 from neat_rl.networks.species_actor import SpeciesActor
 from neat_rl.networks.species_critic import SpeciesCritic
@@ -79,7 +80,8 @@ class SpeciesTD3:
         state, action, action_org, next_state, reward, species_id, behavior, terminated = self.replay_buffer.sample(self.args.batch_size)
         if self.args.resample_species:
             org_species = species_id
-            species_id = torch.randint(0, self.args.num_species, torch.Size([self.args.batch_size])).to(self.device)
+            if random.random() <= 0.5:
+                species_id = torch.randint(0, self.args.num_species, torch.Size([self.args.batch_size])).to(self.device)
         
         with torch.no_grad():
             # Select action according to policy and add clipped noise
@@ -92,30 +94,20 @@ class SpeciesTD3:
             ).clamp(-self.max_action, self.max_action)
 
             if self.args.use_state_disc:
-                disc_logits = self.discriminator(state)
-            elif self.args.use_state_only_disc:
-                disc_logits = self.discriminator(state)
-            elif self.args.use_action_disc:
-                disc_logits = self.discriminator(action)
+                disc_logits = self.discriminator(next_state)
             else:    
                 disc_logits = self.discriminator(behavior)
 
             diversity_bonus = log_softmax(disc_logits, dim=-1).gather(-1, species_id.unsqueeze(1))  - math.log(1/self.args.num_species)
-            if not self.args.no_train_diversity:
-                #print("BEFORE reward", reward[:10])
-                reward = reward + self.args.disc_lam * diversity_bonus
-                #print("AFTER reward", reward[:10], "\n")
-                # if self.args.use_state_disc:
-                #     # Add the diversity bonus
-                #     reward = reward + self.args.disc_lam * diversity_bonus 
-                # else:
-                #     reward = reward + self.args.disc_lam * diversity_bonus
 
+            qd_reward = reward + self.args.disc_lam * diversity_bonus
+                
 
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_state, next_action, species_id)
             target_Q = torch.min(target_Q1, target_Q2)
-            target_Q = reward + terminated * self.args.gamma * target_Q
+            
+            target_Q = qd_reward + terminated * self.args.gamma * target_Q
 
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic(state, action, species_id)
@@ -140,6 +132,7 @@ class SpeciesTD3:
             disc_loss = self.disc_loss_fn(logits, species_id)
             
         self.discriminator_optimizer.zero_grad()
+        nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
         disc_loss.backward()
         self.discriminator_optimizer.step()
         
@@ -184,7 +177,7 @@ class SpeciesTD3:
             disc_loss = self.disc_loss_fn(logits, species_id)
             self.discriminator_optimizer.zero_grad()
             disc_loss.backward()
-            #nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
+            nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
             self.discriminator_optimizer.step()
         # print("behavior[:5]", behavior[:5])
         print("disc_loss", disc_loss)

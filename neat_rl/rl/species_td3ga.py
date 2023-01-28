@@ -31,13 +31,9 @@ class SpeciesTD3GA(SpeciesTD3):
         for _ in range(self.args.n_org_updates):
             state  = self.replay_buffer.sample_states(self.args.batch_size, species_id)
             
-            #torch.IntTensor([species_id]).to(self.device)
             actor_loss = -self.critic.Q1(state, net(state), species_ids).mean()
             optimizer.zero_grad()
-
-            
             actor_loss.backward()
-            # print("ACTOR GRAD", net.in_layer.weight.grad.max(), net.in_layer.weight.grad.min())
-            # torch.nn.utils.clip_grad_norm_(net.parameters(), self.args.max_norm)
-            # print("AFTER ACTOR GRAD", net.in_layer.weight.grad.max(), net.in_layer.weight.grad.min(), "\n")
+            torch.nn.utils.clip_grad_norm_(net.parameters(), self.args.max_norm)
+            
             optimizer.step()

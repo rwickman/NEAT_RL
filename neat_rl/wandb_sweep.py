@@ -28,16 +28,20 @@ class HyperparameterTuner:
         env = EnvironmentGADiversity(self.args, archive, kdt)
         
         epoch = 0
+        cur_max_total_reward = None
         while env.total_eval < self.args.max_org_evals:
             max_total_reward, _, _, _ = env.train()
             if len(env.archive) > 0:
                 total_fitness_archive = sum(list(archive.values()))
             else:
                 total_fitness_archive = 0
+            
+            if cur_max_total_reward is None or max_total_reward > cur_max_total_reward:
+                cur_max_total_reward = max_total_reward
 
             wandb.log({
                 "epoch": epoch,
-                "max_total_reward": max_total_reward,
+                "max_total_reward": cur_max_total_reward,
                 "coverage": len(env.archive),
                 "qd-score": total_fitness_archive
             })
