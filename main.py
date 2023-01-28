@@ -46,13 +46,16 @@ def main(args):
             
             
             train_json_file = os.path.join(args.save_dir, "train_dict.json")
-            archive_file = os.path.join(args.save_dir, "archive.json")
+            archive_file = os.path.join(args.save_dir, f"archive_{args.env}.json")
             args_file = os.path.join(args.save_dir, "args.json")
             if args.load and not args.render:
+                if not os.path.exists(archive_file):
+                    archive_file = os.path.join(args.save_dir, "archive.json") 
                 with open(train_json_file) as f:
                     train_dict = json.load(f)
                 
                 archive, archive_species_ids = load_archive(archive_file)
+                archive_file = os.path.join(args.save_dir, f"archive_{args.env}.json")
             else:
                 train_dict = {
                     "max_fitness": [],
