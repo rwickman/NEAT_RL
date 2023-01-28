@@ -143,7 +143,7 @@ class SpeciesTD3:
             # Optimize the actor 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
-            nn.utils.clip_grad_norm_(self.actor.parameters(), self.args.max_norm)
+            #nn.utils.clip_grad_norm_(self.actor.parameters(), self.args.max_norm)
             self.actor_optimizer.step()
 
 			# Update the frozen target models
