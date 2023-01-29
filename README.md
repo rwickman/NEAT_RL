@@ -15,6 +15,17 @@ To train the model on the QDHopper environment with a population size of 64 with
 python3 main.py --env QDHopperBulletEnv-v0 --pop_size 64 --num_species 8 --disc_lam 0.01 --survival_rate 0.5 --save_dir <path/to/save_dir>
 ```
 
+To load the model to continue training:
+```shell
+python3 main.py --env QDHopperBulletEnv-v0 --pop_size 64 --num_species 8 --disc_lam 0.01 --survival_rate 0.5 --save_dir <path/to/save_dir> --loa
+```
+
+
+If you want to see population interacting with environment, without training (i.e., render):
+```shell
+python3 main.py --env QDHopperBulletEnv-v0 --pop_size 64 --num_species 8 --disc_lam 0.01 --survival_rate 0.5 --save_dir <path/to/save_dir> --load --render
+```
+
 ## Hyperparmeter tunning
 To hyperparameter tune on the QDHopper environment: 
 ```shell
