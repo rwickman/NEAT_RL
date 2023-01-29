@@ -45,7 +45,7 @@ def main(args):
             kdt = load_kdtree(args.env)
             
             
-            train_json_file = os.path.join(args.save_dir, "train_dict.json")
+            train_json_file = os.path.join(args.save_dir, f"train_dict_{args.env}.json")
             archive_file = os.path.join(args.save_dir, f"archive_{args.env}.json")
             args_file = os.path.join(args.save_dir, "args.json")
             if args.load and not args.render:

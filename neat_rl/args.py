@@ -16,7 +16,7 @@ def update_parser(parser):
         help="Value used for interpolating target policy.")
     parser.add_argument("--batch_size", type=int, default=256,
         help="Batch size for updating networks.")
-    parser.add_argument("--replay_capacity", type=int, default=262144,
+    parser.add_argument("--replay_capacity", type=int, default=524288,
         help="Maximum size of replay memory.")
     parser.add_argument("--behavior_capacity", type=int, default=262144,
         help="Maximum size of replay memory.")
@@ -100,9 +100,9 @@ def update_parser(parser):
         help="Number of species to create.")
     parser.add_argument("--pop_size", type=int, default=32,
         help="Population size.")
-    parser.add_argument("--max_org_evals", type=int, default=1e6, 
+    parser.add_argument("--max_org_evals", type=int, default=1e5, 
         help="Total number of organism evaluations to run.")
-    parser.add_argument("--survival_rate", type=float, default=0.25, 
+    parser.add_argument("--survival_rate", type=float, default=0.5, 
         help="Percentage of organisms that will survive.")
     parser.add_argument("--diversity_bonus_sort", action="store_true",
         help="Sort by organisms by diversity bonus reward.")

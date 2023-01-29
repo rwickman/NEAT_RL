@@ -9,6 +9,12 @@ You will also need to install QDGym:
 pip3 install git+https://github.com/ollenilsson19/QDgym.git#egg=QDgym
 ```
 
+## Training the models
+To train the model on the QDHopper environment with a population size of 64 with 8 species, survival rate of 0.5, and discriminator lambda of 0.1:
+```shell
+python3 main.py --env QDHopperBulletEnv-v0 --pop_size 64 --num_species 8 --disc_lam 0.01 --survival_rate 0.5 --save_dir <path/to/save_dir>
+```
+
 ## Hyperparmeter tunning
 To hyperparameter tune on the QDHopper environment: 
 ```shell
