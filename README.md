@@ -26,6 +26,11 @@ If you want to see population interacting with environment, without training (i.
 python3 main.py --env QDHopperBulletEnv-v0 --pop_size 64 --num_species 8 --disc_lam 0.01 --survival_rate 0.5 --use_state_disc --save_dir <path/to/save_dir> --load --render
 ```
 
+To track the current training results for a model:
+```shell
+python3 neat_rl/helpers/plot_results.py --save_dir <path/to/model> --env <env_name>
+```
+
 ## Hyperparmeter tunning
 To hyperparameter tune on the QDHopper environment: 
 ```shell

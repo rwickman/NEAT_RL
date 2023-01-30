@@ -9,10 +9,14 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 my_cmap = mpl.cm.viridis
 
-def print_stats(save_dir):
+def print_stats(save_dir, env):
     
-    pop_file = os.path.join(save_dir, "pop.json")    
-    train_dict_file = os.path.join(save_dir, "train_dict.json")
+    pop_file = os.path.join(save_dir, "pop.json")
+    if env:    
+        train_dict_file = os.path.join(save_dir, f"train_dict_{env}.json")
+    else:
+        train_dict_file = os.path.join(save_dir, f"train_dict.json")
+
     with open(pop_file) as f:
         pop_dict = json.load(f)
 
@@ -73,13 +77,24 @@ def plot_species(save_dir):
     norm = mpl.colors.Normalize(vmin=0, vmax=max(org_id_to_species.values()))
     for org_dict in pop_dict["orgs"]:
         species_id = org_id_to_species[str(org_dict["id"])]
-        ax.scatter(org_dict["behavior"][0], org_dict["behavior"][1], color=cmap(norm(species_id)))
+        if len(org_dict["behavior"]) == 2:
+            ax.scatter(org_dict["behavior"][0], org_dict["behavior"][1], color=cmap(norm(species_id)))
+        else:
+            ax.scatter(org_dict["behavior"][0], 0.5, color=cmap(norm(species_id)))
+
     plt.show()
 
 
 def print_archive(save_dir, env):
-    archive_file = os.path.join(save_dir, "archive.json")
-    archive, _ = load_archive(archive_file)
+    args_file = os.path.join(save_dir, "args.json")    
+    with open(args_file) as f:
+        args = json.load(f)
+    
+    archive_file = os.path.join(save_dir, f"archive_{env}.json")
+    if not os.path.exists(archive_file):
+        archive_file = os.path.join(save_dir, "archive.json")
+
+    archive, archive_species_ids = load_archive(archive_file)
     kdt = load_kdtree(env)
     kdt_points = np.array(kdt.data)
     archive_points = list(archive.keys())
@@ -88,13 +103,26 @@ def print_archive(save_dir, env):
     max_fit = max(list(archive.values()))
     print(min_fit, max_fit)
     norm = mpl.colors.Normalize(vmin=min_fit, vmax=max_fit)
-    
+
+    cmap = mpl.colormaps["tab20"]
+    norm_2 = mpl.colors.Normalize(vmin=0, vmax=args["num_species"])
+
     # Set plot params
-    fig, ax = plt.subplots(figsize=(10, 10))
-    ax.set_xlim([0, 1])
-    ax.set_ylim([0, 1])
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    for i in range(2):
+
+        ax[i].set_xlim([0, 1])
+        ax[i].set_ylim([0, 1])
+    
+    
     for point in archive_points:
-        ax.scatter(point[0], point[1], color=my_cmap(norm(archive[point])))
+        if len(point) == 2:
+            ax[0].scatter(point[0], point[1], color=my_cmap(norm(archive[point])))
+            ax[1].scatter(point[0], point[1], color=cmap(norm_2(archive_species_ids[point])))
+        else:
+            ax[0].scatter(point[0], 0.5, color=my_cmap(norm(archive[point])))
+            ax[1].scatter(point[0], 0.5, color=cmap(norm_2(archive_species_ids[point])))
+
     plt.show()
     # params = {
     #     "axes.labelsize": 18,
@@ -136,8 +164,11 @@ def print_archive(save_dir, env):
 
 
 
-def plot(save_dir):
-    train_dict_file = os.path.join(save_dir, "train_dict.json")
+def plot(save_dir, env=None):
+    if env:
+        train_dict_file = os.path.join(save_dir, f"train_dict_{env}.json")
+    else:
+        train_dict_file = os.path.join(save_dir, "train_dict.json")
 
     def moving_average(x, w=3):
         return np.convolve(x, np.ones(w), 'valid') / w
@@ -170,8 +201,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    print_stats(args.save_dir)
-    if args.env:
-        plot_species(args.save_dir)
-        print_archive(args.save_dir, args.env)
-    plot(args.save_dir)
+    print_stats(args.save_dir, args.env)
+    # if args.env:
+    #     plot_species(args.save_dir)
+    #     print_archive(args.save_dir, args.env)
+    plot(args.save_dir, args.env)
