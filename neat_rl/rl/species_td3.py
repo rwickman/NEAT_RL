@@ -33,15 +33,8 @@ class SpeciesTD3:
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.args.lr)
         
-        if self.args.use_state_disc:
-            self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
-        elif self.args.use_state_only_disc:
-            self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
-
-        elif self.args.use_action_disc:
-            self.discriminator = Discriminator(self.args.num_species, action_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
-        else:    
-            self.discriminator = Discriminator(self.args.num_species, behavior_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
+        
+        self.discriminator = Discriminator(self.args.num_species, state_dim, self.args.critic_hidden_size, self.args.n_hidden).to(self.device)
         
         self.discriminator_optimizer = torch.optim.Adam(self.discriminator.parameters(), lr=self.args.disc_lr)
 
