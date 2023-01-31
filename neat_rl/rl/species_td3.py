@@ -11,7 +11,6 @@ from neat_rl.networks.species_critic import SpeciesCritic
 from neat_rl.networks.discriminator import Discriminator 
 
 from neat_rl.rl.species_replay_buffer import SpeciesReplayBuffer
-from neat_rl.rl.behavior_distr import BehaviorDistr
 
 class SpeciesTD3:
     def __init__(self, args, state_dim, action_dim, max_action, behavior_dim):
@@ -53,10 +52,6 @@ class SpeciesTD3:
 
         self.total_iter = 0
         self.rl_save_file = os.path.join(self.args.save_dir, "td3.pt")
-        if self.args.use_state_disc:
-            self.behavior_distr = BehaviorDistr(self.args, state_dim)
-        else:    
-            self.behavior_distr = BehaviorDistr(self.args, behavior_dim)
 
         
     def select_action(self, state, species_id):
@@ -93,10 +88,8 @@ class SpeciesTD3:
                 self.actor_target(next_state, species_id) + noise
             ).clamp(-self.max_action, self.max_action)
 
-            if self.args.use_state_disc:
-                disc_logits = self.discriminator(next_state)
-            else:    
-                disc_logits = self.discriminator(behavior)
+
+            disc_logits = self.discriminator(next_state)
 
             diversity_bonus = log_softmax(disc_logits, dim=-1).gather(-1, species_id.unsqueeze(1))  - math.log(1/self.args.num_species)
 
@@ -121,10 +114,9 @@ class SpeciesTD3:
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.args.max_norm)
         self.critic_optimizer.step()
     
-        if self.args.use_state_disc:
-            logits = self.discriminator(state)
-        else:
-            logits = self.discriminator(behavior)
+
+        logits = self.discriminator(state)
+
 
         if self.args.resample_species:
             disc_loss = self.disc_loss_fn(logits, org_species)
@@ -143,7 +135,7 @@ class SpeciesTD3:
             # Optimize the actor 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
-            #nn.utils.clip_grad_norm_(self.actor.parameters(), self.args.max_norm)
+            nn.utils.clip_grad_norm_(self.actor.parameters(), self.args.max_norm)
             self.actor_optimizer.step()
 
 			# Update the frozen target models
@@ -161,27 +153,9 @@ class SpeciesTD3:
                 print("actor_loss", actor_loss, "critic_loss", critic_loss, "disc_loss", disc_loss)
                 print("behavior", behavior[:10])
                 #print("skew_weights", skew_weights[:10], probs[:10], skew_weights.max(), probs.max(), skew_weights.sum(), probs.sum())
+                print("AVG REWARD", reward.mean(), "AVG DIVERSITY", diversity_bonus.mean())
                 print("diversity_bonus", diversity_bonus.view(-1)[:10], "\n")
-    
-    def train_discriminator(self):
-        self.behavior_distr.refresh()
-        for _ in range(self.args.disc_train_iter):
-            # Train the discriminator
-            behavior, species_id = self.behavior_distr.sample()
-            #print("behavior", behavior)
-            behavior = behavior.to(self.device)
-            species_id = species_id.to(self.device)
-
-            logits = self.discriminator(behavior)
-            
-            disc_loss = self.disc_loss_fn(logits, species_id)
-            self.discriminator_optimizer.zero_grad()
-            disc_loss.backward()
-            nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.args.max_norm)
-            self.discriminator_optimizer.step()
-        # print("behavior[:5]", behavior[:5])
-        print("disc_loss", disc_loss)
-
+                
     
     def save(self):
         model_dict = {

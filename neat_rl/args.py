@@ -30,7 +30,7 @@ def update_parser(parser):
     parser.add_argument("--critic_hidden_size", type=int, default=256,
         help="Hidden size of critic network.")
 
-    parser.add_argument("--expl_noise", type=float, default=0.1,
+    parser.add_argument("--expl_noise", type=float, default=0.2,
         help="Exploration noise.")
     
     parser.add_argument("--policy_noise", type=float, default=0.2,
@@ -69,7 +69,7 @@ def update_parser(parser):
 
     parser.add_argument("--disc_lr", type=float, default=3e-4,
         help="Learning rate of species discriminator.")
-    parser.add_argument("--disc_lam", type=float, default=0.01,
+    parser.add_argument("--disc_lam", type=float, default=0.05,
         help="Reward scaling for discriminator.")
     parser.add_argument("--disc_train_iter", type=int, default=64,
         help="Number of iterations to train the discriminator.")
