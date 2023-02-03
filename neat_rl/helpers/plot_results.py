@@ -39,6 +39,7 @@ def print_stats(save_dir, env):
         min_generation = min(org_dict["generation"], min_generation)
         avg_generation += org_dict["generation"]
         avg_age += org_dict["age"]
+        print("AGE", org_dict["age"], "fitness", org_dict["avg_fitness"])
         species_id = org_id_to_species[str(org_dict["id"])]
         
         # Add to the behavior sum
@@ -202,7 +203,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print_stats(args.save_dir, args.env)
-    # if args.env:
-    #     plot_species(args.save_dir)
-    #     print_archive(args.save_dir, args.env)
+    if args.env:
+        plot_species(args.save_dir)
+        print_archive(args.save_dir, args.env)
     plot(args.save_dir, args.env)
