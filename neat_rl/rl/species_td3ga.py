@@ -34,4 +34,5 @@ class SpeciesTD3GA(SpeciesTD3):
             actor_loss = -self.critic.Q1(state, net(state), species_ids).mean()
             optimizer.zero_grad()
             actor_loss.backward()
+            torch.nn.utils.clip_grad_norm_(net.parameters(), self.args.max_norm)
             optimizer.step()

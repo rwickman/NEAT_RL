@@ -121,7 +121,7 @@ def main(args):
 
 
                     best_org = env.population.get_best()
-                    if i % 64 == 0:
+                    if i % 16 == 0:
                         best_org_avg_fitness, best_org_first_fitness, eval_max_fitness = env.evaluate_10(best_org)
                         train_dict["best_org_avg_fitness"].append(best_org_avg_fitness) 
                         train_dict["best_org_first_fitness"].append(best_org_first_fitness)

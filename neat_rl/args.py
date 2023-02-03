@@ -58,6 +58,8 @@ def update_parser(parser):
 
     parser.add_argument("--org_lr", type=float, default=6e-4,
         help="Learning rate for an organism using policy updates.")
+    parser.add_argument("--max_age", type=int, default=20,
+        help="Maximum age of organism.")
     parser.add_argument("--n_org_updates", type=int, default=64,
         help="Number of updates to perform for an organism.")
     parser.add_argument("--pg_rate", type=float, default=1.0,

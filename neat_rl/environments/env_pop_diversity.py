@@ -77,10 +77,7 @@ class EnvironmentGADiversity:
             behavior = self.env.desc
 
             if self.args.render:
-                if self.args.use_state_disc:
-                    total_diversity_bonus += self.td3ga.get_diversity(state, species_id)
-                else:
-                    total_diversity_bonus += self.td3ga.get_diversity(behavior, species_id)
+                total_diversity_bonus += self.td3ga.get_diversity(state, species_id)
 
             if not evaluate and not self.args.render:
                 exps.append([state, action, action_org, next_state, reward, species_id, behavior, done])
@@ -92,12 +89,10 @@ class EnvironmentGADiversity:
             if not evaluate:
                 self.total_timesteps += 1
             cur_step += 1
+        
             if self.args.render:
                 time.sleep(0.005)
         
-        # if not self.args.use_state_disc:
-        #     total_diversity_bonus = self.td3ga.discriminator(torch.FloatTensor(behavior).to(self.td3ga.device))[species_id].item()
-        #     self.td3ga.behavior_distr.add(behavior, species_id)
 
 
         if not evaluate and not self.args.render:
@@ -106,9 +101,7 @@ class EnvironmentGADiversity:
                 self.td3ga.replay_buffer.add(*exp)
 
         if self.args.render:
-            print(behavior, cur_step)
-        
-        if self.args.render:
+            print("AGE", org.age, "BEHAVIOR", behavior,"STEPS", cur_step)
             print("total_reward", self.env.tot_reward, "total_diversity_bonus", total_diversity_bonus)
 
         return self.env.tot_reward, behavior, total_diversity_bonus
@@ -122,8 +115,8 @@ class EnvironmentGADiversity:
         total_fitness = 0
         random.shuffle(self.population.orgs)
 
-        if self.args.render:
-            self.population.orgs = sorted(self.population.orgs, key=lambda x: x.avg_fitness, reverse=False)
+        # if self.args.render:
+        #     self.population.orgs = sorted(self.population.orgs, key=lambda x: x.avg_fitness, reverse=False)
 
         for org in self.population.orgs:
             self.total_eval += 1

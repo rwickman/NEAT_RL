@@ -93,7 +93,12 @@ class GradientPopulation:
         elif self.args.best_diversity_sort:
             cur_species.orgs.sort(key=lambda x: x.bonus_best, reverse=True)
         else:
-            cur_species.orgs.sort(key=lambda x: x.fitness, reverse=True)
+            def sort_fitness(org):
+                if org.age >= self.args.max_age:
+                    return -1e6
+                else:
+                    return org.avg_fitness
+            cur_species.orgs.sort(key=lambda x: sort_fitness(x), reverse=True)
         
         # Calculate how many organsims should remain "alive"
         num_live = int(max(self.args.survival_rate * species_len, 1))
