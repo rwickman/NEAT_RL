@@ -30,7 +30,7 @@ def update_parser(parser):
     parser.add_argument("--critic_hidden_size", type=int, default=256,
         help="Hidden size of critic network.")
 
-    parser.add_argument("--expl_noise", type=float, default=0.2,
+    parser.add_argument("--expl_noise", type=float, default=0.1,
         help="Exploration noise.")
     
     parser.add_argument("--policy_noise", type=float, default=0.2,
