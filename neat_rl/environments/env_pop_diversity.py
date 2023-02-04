@@ -63,7 +63,6 @@ class EnvironmentGADiversity:
             print(species_id)
         cur_step = 0 
         total_diversity_bonus = 0
-        exps = []
         while not done:
             if self.td3ga.replay_buffer.size < self.args.learning_starts and not self.args.load and not evaluate:
                 action = self.env.action_space.sample()
@@ -80,7 +79,7 @@ class EnvironmentGADiversity:
                 total_diversity_bonus += self.td3ga.get_diversity(state, species_id)
 
             if not evaluate and not self.args.render:
-                exps.append([state, action, action_org, next_state, reward, species_id, behavior, done])
+                self.td3ga.replay_buffer.add(state, action, action_org, next_state, reward, species_id, behavior, done)
 
             if not evaluate and not self.args.render and self.total_timesteps % self.args.update_freq == 0 and self.td3ga.replay_buffer.size >= self.args.learning_starts:
                 self.td3ga.train()
@@ -93,12 +92,6 @@ class EnvironmentGADiversity:
             if self.args.render:
                 time.sleep(0.005)
         
-
-
-        if not evaluate and not self.args.render:
-            for exp in exps:
-                #exp[-2] = behavior
-                self.td3ga.replay_buffer.add(*exp)
 
         if self.args.render:
             print("AGE", org.age, "BEHAVIOR", behavior,"STEPS", cur_step)

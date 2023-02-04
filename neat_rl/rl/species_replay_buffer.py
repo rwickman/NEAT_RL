@@ -16,6 +16,7 @@ class SpeciesReplayBuffer:
 		self.next_state = np.zeros((max_size, state_dim))
 		self.reward = np.zeros((max_size, 1))
 		self.species_id = np.zeros((max_size, 1))
+		self.species_id[:] = -1
 		self.behavior = np.zeros((max_size, behavior_dim))
 		self.not_done = np.zeros((max_size, 1))
 
@@ -53,7 +54,7 @@ class SpeciesReplayBuffer:
 		if self.resample_species:
 			ind = np.random.choice(self.size, size=batch_size, replace=False)
 		else:
-			species_states = np.where(self.species_id == species_id)[0]
+			species_states = np.where(self.species_id[:self.size] == species_id)[0]
 			ind = np.random.choice(species_states, size=batch_size)
 
 		return torch.FloatTensor(self.state[ind]).to(self.device)
