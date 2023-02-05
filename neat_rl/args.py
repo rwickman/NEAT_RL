@@ -30,7 +30,7 @@ def update_parser(parser):
     parser.add_argument("--critic_hidden_size", type=int, default=256,
         help="Hidden size of critic network.")
 
-    parser.add_argument("--expl_noise", type=float, default=0.1,
+    parser.add_argument("--expl_noise", type=float, default=0.2,
         help="Exploration noise.")
     
     parser.add_argument("--policy_noise", type=float, default=0.2,
@@ -58,7 +58,7 @@ def update_parser(parser):
 
     parser.add_argument("--org_lr", type=float, default=6e-4,
         help="Learning rate for an organism using policy updates.")
-    parser.add_argument("--max_age", type=int, default=40,
+    parser.add_argument("--max_age", type=int, default=100000000,
         help="Maximum age of organism.")
     parser.add_argument("--n_org_updates", type=int, default=64,
         help="Number of updates to perform for an organism.")
