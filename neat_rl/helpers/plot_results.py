@@ -6,7 +6,7 @@ import pickle
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 my_cmap = mpl.cm.viridis
 
 def print_stats(save_dir, env):
@@ -32,6 +32,10 @@ def print_stats(save_dir, env):
     avg_generation = 0
     min_generation = 1e6
     avg_age = 0
+    num_species = len(set(org_id_to_species.values()))
+    print("num_species")
+
+    species_to_org_dict = {k:[] for k in range(num_species)}
 
     for org_dict in pop_dict["orgs"]:
         max_age = max(org_dict["age"], max_age)
@@ -39,9 +43,11 @@ def print_stats(save_dir, env):
         min_generation = min(org_dict["generation"], min_generation)
         avg_generation += org_dict["generation"]
         avg_age += org_dict["age"]
-        print("AGE", org_dict["age"], "fitness", org_dict["avg_fitness"])
-        species_id = org_id_to_species[str(org_dict["id"])]
         
+        #print("AGE", org_dict["age"], "fitness", org_dict["avg_fitness"])
+        species_id = org_id_to_species[str(org_dict["id"])]
+        species_to_org_dict[species_id].append(org_dict)
+
         # Add to the behavior sum
         if species_id not in avg_behavior:
             avg_behavior[species_id] = np.array(org_dict["behavior"])  
@@ -50,6 +56,13 @@ def print_stats(save_dir, env):
             avg_behavior[species_id] += np.array(org_dict["behavior"])  
             species_sizes[species_id] += 1
     
+    for k, v in species_to_org_dict.items():
+        print(f"SPECIES {k}")
+        for org_dict in v:
+            print("AGE", org_dict["age"], "fitness", org_dict["avg_fitness"])
+        
+        print("\n")
+
     # Average out the behavior of each species
     for k in range(len(avg_behavior)):
         avg_behavior[k] = avg_behavior[k] / species_sizes[k]

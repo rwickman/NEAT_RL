@@ -89,8 +89,8 @@ class EnvironmentGADiversity:
                 self.total_timesteps += 1
             cur_step += 1
         
-            if self.args.render:
-                time.sleep(0.005)
+            # if self.args.render:
+            #     time.sleep(0.005)
         
 
         if self.args.render:

@@ -71,7 +71,8 @@ def save_population(population, save_dir):
 
 def _load_organism(args, org_dict, base_actor):
     net = base_actor.copy(transfer_weights=False)
-    net.load_state_dict(torch.load(org_dict["network"]))
+    net_path = os.path.join(args.save_dir, "nets", org_dict["network"].split("/")[-1])
+    net.load_state_dict(torch.load(net_path))
 
     org = Organism(args, net, org_dict["generation"], org_dict["id"])
     org.behavior = org_dict["behavior"]
