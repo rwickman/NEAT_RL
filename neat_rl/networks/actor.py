@@ -38,6 +38,18 @@ class Actor(nn.Module):
 
         return copy_net
 
+    def select_action(self, state):
+        state = torch.FloatTensor(state.reshape(1, -1)).to(self.device)
+        return self.forward(state).cpu().data.numpy().flatten()
+
+
+    def sample_action(self, state):
+        action = (
+            self.select_action(state)
+                + np.random.normal(0, self.max_action * self.args.expl_noise, size=self.action_dim)
+            ).clip(-self.max_action, self.max_action)
+        return action
+    
 
     def forward(self, x):
         x = F.relu(self.in_layer(x))

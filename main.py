@@ -9,12 +9,13 @@ from neat_rl.environments.env_pop_diversity import EnvironmentGADiversity
 from neat_rl.environments.env_pop_diversity_org import EnvironmentGADiversityOrg
 from neat_rl.environments.env_pop_diversity_sac import EnvironmentGADiversitySAC
 
-from neat_rl.wandb_sweep import HyperparameterTuner
+
 from neat_rl.helpers.saving import save_population
 
 def main(args):
     #env = Environment(args)
     if args.hyperparameter_tune:
+        from neat_rl.wandb_sweep import HyperparameterTuner
         tuner = HyperparameterTuner(args)
         tuner.start()
     else:

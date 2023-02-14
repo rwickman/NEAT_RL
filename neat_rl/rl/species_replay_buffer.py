@@ -1,7 +1,7 @@
 
 import numpy as np
 import torch
-
+import os
 
 class SpeciesReplayBuffer:
 	def __init__(self, state_dim, action_dim, behavior_dim, max_size=int(1e6), resample_species=False):
@@ -58,3 +58,31 @@ class SpeciesReplayBuffer:
 			ind = np.random.choice(species_states, size=batch_size)
 
 		return torch.FloatTensor(self.state[ind]).to(self.device)
+
+	def save(self, save_dir):
+		out_file = os.path.join(save_dir, "replay_buffer.npz")
+		d = {
+			"state": self.state,
+			"action": self.action,
+			"next_state": self.next_state,
+			"reward": self.reward,
+			"species_id": self.species_id,
+			"not_done": self.not_done,
+			"ptr": self.ptr,
+			"size": self.size
+		}
+
+		np.savez(out_file, **d)
+
+	def load(self, save_dir):
+		out_file = os.path.join(save_dir, "replay_buffer.npz")
+		data = np.load(out_file)
+
+		self.state = data["state"]
+		self.action = data["action"]
+		self.next_state = data["next_state"]
+		self.species_id = data["species_id"]
+		self.not_done = data["not_done"]
+		self.ptr = int(data["ptr"])
+		self.size = int(data["size"])
+
