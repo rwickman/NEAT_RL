@@ -56,20 +56,20 @@ All environments:
 | Number of Species ($m$)                      | 8           |
 | Diversity Reward Scale ($\lambda$)           | 0.05        |
 | Species Elites Value ($K$)                   | 4           |
-| Policy Update Steps ($n\_grad$)              | 64          |
-| Critic Update Freq. ($critic\_update\_freq$) | 8           |
+| Policy Update Steps (n_grad)                 | 64          |
+| Critic Update Freq. (critic_update_freq)     | 8           |
 | Policy Hidden Size                           | 128         |
 | Species Actor Hidden Size                    | 256         |
 | Species Critic Hidden Size                   | 256         |
 | Discriminator Hidden Size                    | 256         |
 | Species Actor/Critic and Discriminator Learning Rate | 0.003 |
 | Policy Learning Rate                         | 0.006       |
-| Number of Evaluations ($num\_eval$)          | $10^{5}$    |
+| Number of Evaluations (num_eval)             | $10^{5}$    |
 | Batch Size ($N$)                             | 256         |
 | Discount Factor ($\gamma$)                   | 0.99        |
 | Species Target Update Rate ($\tau$)          | 0.005       |
 | TD3 Exploration Noise                        | 0.2         |
-| TD3 Smoothing Variance ($\sigma$)           | 0.2         |
+| TD3 Smoothing Variance ($\sigma$)            | 0.2         |
 | TD3 Noise Clip ($c$)                         | 0.5         |
 | TD3 Target Update Freq. ($d$)                | 2           |
 | Replay Buffer Size                           | $2^{19}$    |
