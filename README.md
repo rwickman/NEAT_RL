@@ -46,8 +46,8 @@ All environments:
 * QDAntBulletEnv-v0
 
 ----
-## Hyperpameters used 
 
+## Hyperpameters used 
 <p align="center">
 
 | Hyperparameter                               | Value       |
