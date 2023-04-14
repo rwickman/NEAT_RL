@@ -57,7 +57,7 @@ All environments:
 | Diversity Reward Scale ($\lambda$)           | 0.05        |
 | Species Elites Value ($K$)                   | 4           |
 | Policy Update Steps (n_grad)                 | 64          |
-| Critic Update Freq. (critic_update_freq)     | 8           |
+| Critic Update Frequency (critic_update_freq)     | 8           |
 | Policy Hidden Size                           | 128         |
 | Species Actor Hidden Size                    | 256         |
 | Species Critic Hidden Size                   | 256         |
