@@ -46,10 +46,10 @@ All environments:
 * QDAntBulletEnv-v0
 
 ----
-
-Hyperpameters for the DQS algorithm:
+## Hyperpameters used 
 
 <p align="center">
+
 | Hyperparameter                               | Value       |
 |----------------------------------------------|-------------|
 | Population Size                              | 64          |
@@ -73,5 +73,8 @@ Hyperpameters for the DQS algorithm:
 | TD3 Noise Clip ($c$)                         | 0.5         |
 | TD3 Target Update Freq. ($d$)                | 2           |
 | Replay Buffer Size                           | $2^{19}$    |
+
+**Table 1:** Hyperparameter values for the DQS algorithm.
+
 </p>
 
