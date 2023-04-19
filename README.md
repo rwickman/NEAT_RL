@@ -1,4 +1,7 @@
 # NEAT_RL
+
+Codebase for the [paper](https://arxiv.org/pdf/2304.07425.pdf): Efficient Quality-Diversity Optimization through Diverse Quality Species
+
 ## Setup
 To install this package run:
 ```shell
@@ -78,3 +81,15 @@ All environments:
 
 </p>
 
+-------
+## Cite
+
+```
+@article{wickman2023efficient,
+  title={Efficient Quality-Diversity Optimization through Diverse Quality Species},
+  author={Wickman, Ryan and Poudel, Bibek and Villarreal, Michael and Zhang, Xiaofei and Li, Weizi},
+  journal={arXiv preprint arXiv:2304.07425},
+  year={2023},
+  url={https://arxiv.org/pdf/2304.07425.pdf}
+}
+```
